@@ -9,7 +9,6 @@ ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu na
 #include<algorithm>
 
 int BOUNDARIES = 5;
-int BORDER = 6;
 //std::vector<Node> stack; //konkretne pre DFS, moze byt queue ked sa robi BFS
 
 
@@ -77,6 +76,11 @@ Node *up(Node *node, std::string color, int n) {
 	}
 
 	if (car != nullptr) {
+		if(car != nullptr && car->yAxis - n < 0){
+			std::cout << "out of bounds" << std::endl;
+			return nullptr;
+		}
+
 		for (auto& c : node->cars)
 		{
 			if (c.color != color) {
@@ -116,6 +120,11 @@ Node* down(Node* node, std::string color, int n) {
 	}
 
 	if (car != nullptr) {
+		if (car != nullptr && car->yAxis + car->size + n > BOUNDARIES ) {
+			std::cout << "out of bounds" << std::endl;
+			return nullptr;
+		}
+
 		for (auto& c : node->cars)
 		{
 			if (c.color != color) {
@@ -142,7 +151,7 @@ Node* down(Node* node, std::string color, int n) {
 	return node;
 }
 
-Node* up(Node* node, std::string color, int n) {
+Node* left(Node* node, std::string color, int n) {
 	Car* car = nullptr;
 
 	for (auto& c : node->cars)
@@ -155,17 +164,22 @@ Node* up(Node* node, std::string color, int n) {
 	}
 
 	if (car != nullptr) {
+		if (car->xAxis - n < 0) {
+			std::cout << "out of bounds" << std::endl;
+			return nullptr;
+		}
+
 		for (auto& c : node->cars)
 		{
 			if (c.color != color) {
 
 				//ak sa nad autom uz nachadza nejake ine auto otocene vertikalne
-				if (c.move == 'v' && c.xAxis == car->xAxis && c.yAxis + c.size <= car->yAxis && c.yAxis + c.size >= car->yAxis - n) {
+				if (c.move == 'v' && c.yAxis == car->yAxis && c.xAxis + c.size <= car->xAxis && c.xAxis + c.size >= car->xAxis - n) {
 					std::cout << "neda sa pohnut" << std::endl;
 					return nullptr;
 				}
 				//ak sa nad autom nachadza ine auto otocene horizontalne
-				else if (c.move == 'h' && c.xAxis <= car->xAxis && c.xAxis + c.size > car->xAxis && c.yAxis < car->yAxis && c.yAxis >= car->yAxis - n) {
+				else if (c.move == 'h' && c.yAxis <= car->yAxis && c.yAxis + c.size > car->yAxis && c.xAxis < car->xAxis && c.xAxis >= car->xAxis - n) {
 					std::cout << "neda sa pohnut" << std::endl;
 					return nullptr;
 				}
@@ -176,11 +190,54 @@ Node* up(Node* node, std::string color, int n) {
 
 	std::cout << "auto sa uspesne pohlo" << std::endl;
 
-	if (car != nullptr) { car->yAxis -= n; }
+	if (car != nullptr) { car->xAxis -= n; }
 
 	return node;
 }
 
+Node* right(Node* node, std::string color, int n) {
+	Car* car = nullptr;
+
+	for (auto& c : node->cars)
+	{
+		if (c.color == color) {
+			car = &c;
+			//node.cars.erase(std::find(node.cars.begin(), node.cars.end(), c));
+			break;
+		}
+	}
+
+	if (car != nullptr) {
+		if (car->xAxis + car->size + n > BOUNDARIES) {
+			std::cout << "out of bounds" << std::endl;
+			return nullptr;
+		}
+
+		for (auto& c : node->cars)
+		{
+			if (c.color != color) {
+
+				//ak sa pod autom uz nachadza nejake ine auto otocene vertikalne
+				if (c.move == 'v' && c.yAxis == car->yAxis && c.xAxis >= car->xAxis + car->size && c.xAxis <= car->xAxis + car->size + n) {
+					std::cout << "neda sa pohnut" << std::endl;
+					return nullptr;
+				}
+				//ak sa pod autom nachadza ine auto otocene horizontalne
+				else if (c.move == 'h' && c.yAxis <= car->yAxis && c.yAxis + c.size > car->yAxis && c.xAxis > car->xAxis && c.xAxis <= car->xAxis + n) {
+					std::cout << "neda sa pohnut" << std::endl;
+					return nullptr;
+				}
+			}
+		}
+	}
+
+
+	std::cout << "auto sa uspesne pohlo" << std::endl;
+
+	if (car != nullptr) { car->xAxis += n; }
+
+	return node;
+}
 
 
 
