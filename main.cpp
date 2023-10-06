@@ -45,185 +45,181 @@ Node* popBfs(std::vector<Node*>& vec) {
 }
 
 //kontrola ci je pohyb platny, vrati index auta, ktore sa ma pohnut o n, ak sa neda pohnut o n, vrati -1
-Node* up(Node node, std::string color, unsigned short n) {
-	Car* car = nullptr;
+unsigned short up(const Node* node, std::string color, unsigned short n) {
+	Car car;
+	unsigned short index;
 
-	for (auto& c : node.cars)
+	for (size_t i = 0; i < node->cars.size(); i++)
 	{
-		if (c.color == color) {
-			car = &c;
-			//node.cars.erase(std::find(node.cars.begin(), node.cars.end(), c));
+		if (node->cars.at(i).color == color) {
+			car = node->cars.at(i);
+			index = i;
+
 			break;
 		}
 	}
 
-	if (car != nullptr) {
-		if(car != nullptr && car->yAxis - n < 0){
-			std::cout << "out of bounds" << std::endl;
-			return nullptr;
-		}
+	
+	if(car.yAxis - n < 0){
+		std::cout << "out of bounds" << std::endl;
+		return -1;
+	}
 		
-		for (auto& c : node.cars)
-		{
-			if (c.color != color) {
+	for (auto& c : node->cars)
+	{
+		if (c.color != color) {
 
-				//ak sa nad autom uz nachadza nejake ine auto otocene vertikalne
-				if (c.dir == 'v' && c.xAxis == car->xAxis && c.yAxis + c.size <= car->yAxis && c.yAxis + c.size > car->yAxis - n) {
-					std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
-					return nullptr;
+			//ak sa nad autom uz nachadza nejake ine auto otocene vertikalne
+			if (c.dir == 'v' && c.xAxis == car.xAxis && c.yAxis + c.size <= car.yAxis && c.yAxis + c.size > car.yAxis - n) {
+				std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
+				return -1;
 				
-				}
-				//ak sa nad autom nachadza ine auto otocene horizontalne
-				else if (c.dir == 'h' && c.xAxis <= car->xAxis && c.xAxis + c.size > car->xAxis && c.yAxis < car->yAxis && c.yAxis >= car->yAxis - n) {
-					std::cout << "prekaza auto otocene v inom smere" << std::endl;
-					return nullptr;
-				}
+			}
+			//ak sa nad autom nachadza ine auto otocene horizontalne
+			else if (c.dir == 'h' && c.xAxis <= car.xAxis && c.xAxis + c.size > car.xAxis && c.yAxis < car.yAxis && c.yAxis >= car.yAxis - n) {
+				std::cout << "prekaza auto otocene v inom smere" << std::endl;
+				return -1;
 			}
 		}
 	}
+	
 
 
 	std::cout << "auto sa uspesne pohlo" << std::endl;
 
-	if (car != nullptr) { car->yAxis -= n; }
-
-	Node *newNode = new(Node);
-
-	newNode->cars = node.cars;
-
-	return newNode;
+	return index;
 }
 
-Node* down(Node* node, std::string color, unsigned short n) {
-	Car* car = nullptr;
+unsigned short down(const Node* node, std::string color, unsigned short n) {
+	Car car;
+	unsigned short index;
 
-	for (auto& c : node->cars)
+	for (size_t i = 0; i < node->cars.size(); i++)
 	{
-		if (c.color == color) {
-			car = &c;
-			//node.cars.erase(std::find(node.cars.begin(), node.cars.end(), c));
+		if (node->cars.at(i).color == color) {
+			car = node->cars.at(i);
+			index = i;
+
 			break;
 		}
 	}
 
-	if (car != nullptr) {
-		if (car->yAxis + car->size + n - 1 > BOUNDARIES ) {
-			std::cout << "out of bounds" << std::endl;
-			return nullptr;
-		}
+	
+	if (car.yAxis + car.size + n - 1 > BOUNDARIES ) {
+		std::cout << "out of bounds" << std::endl;
+		return -1;
+	}
 
-		for (auto& c : node->cars)
-		{
-			if (c.color != color) {
+	for (auto& c : node->cars)
+	{
+		if (c.color != color) {
 
-				//ak sa pod autom uz nachadza nejake ine auto otocene vertikalne
-				if (c.dir == 'v' && c.xAxis == car->xAxis && c.yAxis >= car->yAxis + car->size && c.yAxis < car->yAxis + car->size + n) {
-					std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
-					return nullptr;
-				}
-				//ak sa pod autom nachadza ine auto otocene horizontalne
-				else if (c.dir == 'h' && c.xAxis <= car->xAxis && c.xAxis + c.size > car->xAxis && c.yAxis > car->yAxis && c.yAxis < car->yAxis + car->size + n) {
-					std::cout << "prekaza auto otocene v inom smere" << std::endl;
-					return nullptr;
-				}
+			//ak sa pod autom uz nachadza nejake ine auto otocene vertikalne
+			if (c.dir == 'v' && c.xAxis == car.xAxis && c.yAxis >= car.yAxis + car.size && c.yAxis < car.yAxis + car.size + n) {
+				std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
+				return -1;
+			}
+			//ak sa pod autom nachadza ine auto otocene horizontalne
+			else if (c.dir == 'h' && c.xAxis <= car.xAxis && c.xAxis + c.size > car.xAxis && c.yAxis > car.yAxis && c.yAxis < car.yAxis + car.size + n) {
+				std::cout << "prekaza auto otocene v inom smere" << std::endl;
+				return -1;
 			}
 		}
 	}
+	
 
 
 	std::cout << "auto sa uspesne pohlo" << std::endl;
 
-	if (car != nullptr) { car->yAxis += n; }
-
-	return node;
+	return index;
 }
 
-Node* left(Node* node, std::string color, unsigned short n) {
-	Car* car = nullptr;
+unsigned short left(const Node* node, std::string color, unsigned short n) {
+	Car car;
+	unsigned short index;
 
-	for (auto& c : node->cars)
+	for (size_t i = 0; i < node->cars.size(); i++)
 	{
-		if (c.color == color) {
-			car = &c;
-			//node.cars.erase(std::find(node.cars.begin(), node.cars.end(), c));
+		if (node->cars.at(i).color == color) {
+			car = node->cars.at(i);
+			index = i;
+
 			break;
 		}
 	}
 
-	if (car != nullptr) {
-		if (car->xAxis - n < 0) {
-			std::cout << "out of bounds" << std::endl;
-			return nullptr;
-		}
+	
+	if (car.xAxis - n < 0) {
+		std::cout << "out of bounds" << std::endl;
+		return -1;
+	}
 
-		for (auto& c : node->cars)
-		{
-			if (c.color != color) {
+	for (auto& c : node->cars)
+	{
+		if (c.color != color) {
 
-				//ak sa nad autom uz nachadza nejake ine auto otocene vertikalne
-				if (c.dir == 'h' && c.yAxis == car->yAxis && c.xAxis + c.size <= car->xAxis && c.xAxis + c.size > car->xAxis - n) {
-					std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
-					return nullptr;
-				}
-				//ak sa nad autom nachadza ine auto otocene horizontalne
-				else if (c.dir == 'v' && c.yAxis <= car->yAxis && c.yAxis + c.size > car->yAxis && c.xAxis < car->xAxis && c.xAxis >= car->xAxis - n) {
-					std::cout << "prekaza auto otocene v inom smere" << std::endl;
-					return nullptr;
-				}
+			//ak sa nad autom uz nachadza nejake ine auto otocene vertikalne
+			if (c.dir == 'h' && c.yAxis == car.yAxis && c.xAxis + c.size <= car.xAxis && c.xAxis + c.size > car.xAxis - n) {
+				std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
+				return -1;
+			}
+			//ak sa nad autom nachadza ine auto otocene horizontalne
+			else if (c.dir == 'v' && c.yAxis <= car.yAxis && c.yAxis + c.size > car.yAxis && c.xAxis < car.xAxis && c.xAxis >= car.xAxis - n) {
+				std::cout << "prekaza auto otocene v inom smere" << std::endl;
+				return -1;
 			}
 		}
 	}
+	
 
 
 	std::cout << "auto sa uspesne pohlo" << std::endl;
 
-	if (car != nullptr) { car->xAxis -= n; }
-
-	return node;
+	return index;
 }
 
-Node* right(Node* node, std::string color, unsigned short n) {
-	Car* car = nullptr;
+unsigned short right(const Node* node, std::string color, unsigned short n) {
+	Car car;
+	unsigned short index;
 
-	for (auto& c : node->cars)
+	for (size_t i = 0; i < node->cars.size(); i++)
 	{
-		if (c.color == color) {
-			car = &c;
-			//node.cars.erase(std::find(node.cars.begin(), node.cars.end(), c));
+		if (node->cars.at(i).color == color) {
+			car = node->cars.at(i);
+			index = i;
+
 			break;
 		}
 	}
 
-	if (car != nullptr) {
-		if (car->xAxis + car->size + n - 1 > BOUNDARIES) {
-			std::cout << "out of bounds" << std::endl;
-			return nullptr;
-		}
+	
+	if (car.xAxis + car.size + n - 1 > BOUNDARIES) {
+		std::cout << "out of bounds" << std::endl;
+		return -1;
+	}
 
-		for (auto& c : node->cars)
-		{
-			if (c.color != color) {
+	for (auto& c : node->cars)
+	{
+		if (c.color != color) {
 
-				//ak sa pod autom uz nachadza nejake ine auto otocene vertikalne
-				if (c.dir == 'h' && c.yAxis == car->yAxis && c.xAxis >= car->xAxis + car->size && c.xAxis < car->xAxis + car->size + n) {
-					std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
-					return nullptr;
-				}
-				//ak sa pod autom nachadza ine auto otocene horizontalne
-				else if (c.dir == 'v' && c.yAxis <= car->yAxis && c.yAxis + c.size > car->yAxis && c.xAxis > car->xAxis && c.xAxis < car->xAxis + car->size + n) {
-					std::cout << "prekaza auto otocene v inom smere" << std::endl;
-					return nullptr;
-				}
+			//ak sa pod autom uz nachadza nejake ine auto otocene vertikalne
+			if (c.dir == 'h' && c.yAxis == car.yAxis && c.xAxis >= car.xAxis + car.size && c.xAxis < car.xAxis + car.size + n) {
+				std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
+				return -1;
+			}
+			//ak sa pod autom nachadza ine auto otocene horizontalne
+			else if (c.dir == 'v' && c.yAxis <= car.yAxis && c.yAxis + c.size > car.yAxis && c.xAxis > car.xAxis && c.xAxis < car.xAxis + car.size + n) {
+				std::cout << "prekaza auto otocene v inom smere" << std::endl;
+				return -1;
 			}
 		}
 	}
+	
 
 
 	std::cout << "auto sa uspesne pohlo" << std::endl;
 
-	if (car != nullptr) { car->xAxis += n; }
-
-	return node;
+	return index;
 }
 
 
