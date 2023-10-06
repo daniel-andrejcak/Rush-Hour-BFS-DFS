@@ -17,10 +17,6 @@ unsigned short BOUNDARIES = 5;
 std::vector<Node*> visited;
 std::vector<Node*> nodesToProcess; //!!!premenovat!!!
 
-//
-void push(std::vector<Node*>& vec, Node *node) {
-	vec.push_back(node);
-}
 
 
 //funkcia vrati a odstrani prvy/posledny prvok vectora - zalezi od typu search algoritmu
@@ -47,7 +43,7 @@ Node* popBfs(std::vector<Node*>& vec) {
 //kontrola ci je pohyb platny, vrati index auta, ktore sa ma pohnut o n, ak sa neda pohnut o n, vrati -1
 unsigned short up(const Node* node, std::string color, unsigned short n) {
 	Car car;
-	unsigned short index;
+	unsigned short index = 0;
 
 	for (size_t i = 0; i < node->cars.size(); i++)
 	{
@@ -92,7 +88,7 @@ unsigned short up(const Node* node, std::string color, unsigned short n) {
 
 unsigned short down(const Node* node, std::string color, unsigned short n) {
 	Car car;
-	unsigned short index;
+	unsigned short index = 0;
 
 	for (size_t i = 0; i < node->cars.size(); i++)
 	{
@@ -136,7 +132,7 @@ unsigned short down(const Node* node, std::string color, unsigned short n) {
 
 unsigned short left(const Node* node, std::string color, unsigned short n) {
 	Car car;
-	unsigned short index;
+	unsigned short index = 0;
 
 	for (size_t i = 0; i < node->cars.size(); i++)
 	{
@@ -180,7 +176,7 @@ unsigned short left(const Node* node, std::string color, unsigned short n) {
 
 unsigned short right(const Node* node, std::string color, unsigned short n) {
 	Car car;
-	unsigned short index;
+	unsigned short index = 0;
 
 	for (size_t i = 0; i < node->cars.size(); i++)
 	{
@@ -215,7 +211,6 @@ unsigned short right(const Node* node, std::string color, unsigned short n) {
 		}
 	}
 	
-
 
 	std::cout << "auto sa uspesne pohlo" << std::endl;
 
@@ -267,20 +262,24 @@ Node* moveRight(Node* node, unsigned short index, unsigned short n) {
 
 /*Hlavolam je vyriešený, keï je èervené auto (v smere jeho jazdy) na okraji križovatky a môže sa z nej dosta von.
 Predpokladajte, že èervené auto je vždy otoèené horizontálne a smeruje doprava.*/
- unsigned short checkForFinal(Node node) {
+ unsigned short checkForFinal(Node* node) {
 	unsigned short redX = 0;
 	unsigned short redY = 0;
+	unsigned short index = 0;
 
-	for (auto& c : node.cars)
+	for (size_t i = 0; i < node->cars.size(); i++)
 	{
-		if (c.color == "cervene") {
-			redX = c.xAxis;
-			redY = c.yAxis;
+		if (node->cars.at(i).color == "cervene") {
+			redX = node->cars.at(i).xAxis;
+			redY = node->cars.at(i).yAxis;
+
+			index = i;
+
 			break;
 		}
 	}
 
-	for (auto& c : node.cars)
+	for (auto& c : node->cars)
 	{
 		//ak je ine auto v tom istom riadku
 		if (c.dir == 'h' && c.yAxis == redY && c.xAxis > redX) {
@@ -301,17 +300,11 @@ Predpokladajte, že èervené auto je vždy otoèené horizontálne a smeruje doprava.*
 	return 1;
 }
 
-Node *moveRedToFinal(Node& node) {
+Node *moveRedToFinal(Node* node, const unsigned short& i) {
 	Node* newNode = new Node;
-	newNode->cars = node.cars;
-
-	for (auto& c : newNode->cars)
-	{
-		if (c.color == "cervene") {
-			c.xAxis = 4;
-			break;
-		}
-	}
+	newNode->cars = node->cars;
+	
+	newNode->cars.at(i).xAxis = 4;
 
 	return newNode;
 }
@@ -345,14 +338,6 @@ Car carValidation(std::string color, unsigned short xAxis, unsigned short yAxis,
 }
 
 
-/*
-zabezpecenie vsetkych moznych pohybov, pre kazde auto vyskusa kazdy pohyb o kazdy mozny pocet policok
-takzvane to zrobi to co chce uloha a vrati to root s cestou k final nodu, alebo to vrati samotny root, ked nebude existovat riesenie
-*/
-Node* algorithm(Node *root){
-	return root;
-}
-
 //obrati linked list, ktory je od final node k root tak, aby bol od root k final node;
 Node* reverse(Node* root)
 {
@@ -364,8 +349,10 @@ Node* reverse(Node* root)
 	while (current != NULL) {
 		// Store next
 		next = current->pNode;
+
 		// Reverse current node's pointer
 		current->pNode = prev;
+
 		// Move pointers one position ahead.
 		prev = current;
 		current = next;
@@ -406,6 +393,133 @@ std::ostream& operator<<(std::ostream& os, const Node *node) {
 
 	return os;
 }
+
+/*
+zabezpecenie vsetkych moznych pohybov, pre kazde auto vyskusa kazdy pohyb o kazdy mozny pocet policok
+takzvane to zrobi to co chce uloha a vrati to root s cestou k final nodu, alebo to vrati samotny root, ked nebude existovat riesenie
+*/
+Node* searchAlgorithm(Node* root) {
+
+	//ak sa da s cervenym autom vyjst z parkoviska v pociatocnom stave;
+	unsigned short index = checkForFinal(root);
+
+	if (index != -1) {
+		root->pNode = moveRedToFinal(root, index);
+
+		visited.push_back(root->pNode);
+
+		return root;
+	}
+
+	//pracuje s "najdenymi nodes"
+	while (!nodesToProcess.empty()) {
+		//z datastructure, ktora sa aktualne pouziva vyberie node, ktory ma nasledovat a s nim pracuje 
+		Node* node = pop(nodesToProcess);
+
+		//pre kazde auto
+		for (auto& car : node->cars) 
+		{
+			//kazdy pohyb
+			if (car.dir == 'h') {
+				//kazdy pohyb od 1 do 4
+				for (size_t n = 1; n <= 4; n++)
+				{
+					unsigned short index = left(node, car.color, n);
+
+					if (index ==  -1)
+					{
+						break;
+					}
+
+					Node *newNode = new Node;
+					newNode->cars = node->cars;
+
+					newNode = moveLeft(newNode, index, n);
+
+					newNode->pNode = node;
+
+					nodesToProcess.push_back(newNode);
+				}
+
+				for (size_t n = 1; n <= 4; n++)
+				{
+					unsigned short index = right(node, car.color, n);
+
+					if (index == -1)
+					{
+						break;
+					}
+
+					Node* newNode = new Node;
+					newNode->cars = node->cars;
+
+					newNode = moveRight(newNode, index, n);
+
+					newNode->pNode = node;
+
+					nodesToProcess.push_back(newNode);
+				}
+			}
+			else {
+				for (size_t n = 1; n <= 4; n++)
+				{
+					unsigned short index = up(node, car.color, n);
+
+					if (index == -1)
+					{
+						break;
+					}
+
+					Node* newNode = new Node;
+					newNode->cars = node->cars;
+
+					newNode = moveUp(newNode, index, n);
+
+					newNode->pNode = node;
+
+					nodesToProcess.push_back(newNode);
+				}
+
+				for (size_t n = 1; n <= 4; n++)
+				{
+					unsigned short index = down(node, car.color, n);
+
+					if (index == -1)
+					{
+						break;
+					}
+
+					Node* newNode = new Node;
+					newNode->cars = node->cars;
+
+					newNode = moveDown(newNode, index, n);
+
+					newNode->pNode = node;
+
+					nodesToProcess.push_back(newNode);
+				}
+			}
+		}
+
+
+		visited.push_back(node);
+	}
+
+
+	/*
+	dokoncit: kontrolu, ci uz sa nenachadza vo visited
+	kontrolu, ci sa neda dostat do final nodu, umiestnit na vhodne miesto
+	a teoreticky by to malo fahcat
+	*/
+
+
+
+	Node* finalNode = nullptr;
+
+
+	return reverse(finalNode);
+}
+
 
 int main(int argc, char* argv[]) {
 	std::cout << "zadat farbu, x polohu, y polohu, velkost, smer pohybu" << std::endl;
@@ -486,41 +600,28 @@ int main(int argc, char* argv[]) {
 
 	Node *root = loadCars();
 
-
-	root->pNode = up(*root, "zelene", 1);
-
-	Node* temp = root;
-
-	temp->pNode = up(*temp, "zelene", 1);
-
-	temp = temp->pNode;
-
-	temp->pNode = up(*temp, "zelene", 1);
-
-
-	temp = root;
-
-	while (temp != nullptr) {
-		std::cout << temp->cars.at(1).yAxis << std::endl;
-
-		temp = temp->pNode;
-	}
-
-	std::cout << "konec pico" << std::endl;
+	nodesToProcess.push_back(root);
 
 
 
+	//ak sa nenajde riesenie, tak sa len vypise pociatocny stav a sprava
 	if (root->pNode == nullptr) {
 		std::cout << root << "nenaslo sa riesenie" << std::endl;
 
 		return 1;
 	}
 
-
+	//vypisanie priebehu od pociatocneho stavu po finalny
 	while (root != nullptr) {
 		std::cout << root << std::endl;
 
 		root = root->pNode;
+	}
+
+	//uvolnenie pamate na konci programu
+	for (auto& node : visited)
+	{
+		delete node;
 	}
 
 
