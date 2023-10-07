@@ -3,20 +3,35 @@ bude existovat queue, uzol a sa dostane do queue, zacne sa spracovat. spracovat 
 ktore mozu nasledovat, reprezentovane uzlami daju DO QUEUE NA KONIEC a to zabezpeci ze to bude vyhladavanie do sirky
 ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu nastat sa budu davat DO STACKU NA ZACIATOK, tak to bude prehliadavanie do hlbky*/
 
+#include<algorithm>
 #include<iostream>
 #include<sstream>
 #include<string>
+#include<unordered_set>
 #include<vector>
-#include<algorithm>
+
 #include"Header.h"
+
+
 
 unsigned short BOUNDARIES = 5;
 
 
-//vector pre visited nodes
-std::vector<Node*> visited;
-std::vector<Node*> nodesToProcess; //!!!premenovat!!!
+struct CustomNodeEqual {
+	bool operator()(const Node* node1, const Node* node2) const {
 
+		return node1->cars == node2->cars;
+	}
+};
+
+
+std::ostream& operator<<(std::ostream& os, const Node* node) {
+	for (auto& car : node->cars) {
+		os << car.color << " x: " << car.xAxis << " y: " << car.yAxis << " size: " << car.size << " direction: " << car.dir << std::endl;
+	}
+
+	return os;
+}
 
 
 //funkcia vrati a odstrani prvy/posledny prvok vectora - zalezi od typu search algoritmu
@@ -25,7 +40,7 @@ Node* (*pop)(std::vector<Node*>& vec);
 
 //vec.back() je vlastne stack.top()
 Node* popDfs(std::vector<Node*>& vec) {
-	Node *node = vec.back();
+	Node* node = vec.back();
 
 	vec.pop_back();
 
@@ -39,6 +54,67 @@ Node* popBfs(std::vector<Node*>& vec) {
 
 	return node;
 }
+
+
+/*kontrola pociatocneho stavu - skontroluje, ci kazde auto pri vzniku je na korektnej pozicii,
+zle umiestnene auta nevzniknu a nebudu umiestnene na hracie pole
+predpokladame, ze uzivatel umiestni auta tak, ze sa nebudu prekryvat*/
+Car carValidation(std::string color, unsigned short xAxis, unsigned short yAxis, unsigned short size, char move) {
+	if (color == "cervene" && move != 'h') {
+		std::cout << "red car must be horizontal" << std::endl;
+
+		exit(0);
+	}
+
+	if (size != 2 && size != 3) {
+		std::cout << "wrong size of car" << std::endl;
+
+		exit(0);
+	}
+
+	if ((move == 'h' && xAxis + size - 1 > BOUNDARIES) || (move == 'v' && yAxis + size - 1 > BOUNDARIES) || xAxis >= BOUNDARIES || yAxis >= BOUNDARIES) {
+		std::cout << "out of bounds" << std::endl;
+
+		exit(0);
+	}
+
+	std::cout << color << " car is positioned correctly" << std::endl;
+
+	return Car(color, xAxis, yAxis, size, move);
+}
+
+Node* loadCars() {
+	Node* root = new Node;
+
+	std::string inputString = "cervene 1 1 2 h zelene 4 3 3 v modre 0 0 2 v";
+
+	//docasna zmena std::cin aby citalo zo stringu - !!! len pre DEBUG !!!
+	std::istringstream iss(inputString);
+	std::cin.rdbuf(iss.rdbuf());
+
+	std::string color;
+	unsigned short xAxis;
+	unsigned short yAxis;
+	unsigned short size;
+	char move;
+
+	while (std::cin >> color >> xAxis >> yAxis >> size >> move) {
+		Car car = carValidation(color, xAxis, yAxis, size, move);
+
+		root->cars.push_back(car);
+
+	}
+
+	return root;
+}
+
+
+
+//unordered_set pre visited nodes, lebo vyuziva hash table na hladanie prvkov - rychlejsie ako prehladavanie celeho vectora
+std::unordered_set<Node*, std::hash<Node*>, CustomNodeEqual> visited;
+std::vector<Node*> nodesToProcess; //!!!premenovat!!!
+
+
 
 //kontrola ci je pohyb platny, vrati index auta, ktore sa ma pohnut o n, ak sa neda pohnut o n, vrati -1
 unsigned short up(const Node* node, std::string color, unsigned short n) {
@@ -259,7 +335,6 @@ Node* moveRight(Node* node, unsigned short index, unsigned short n) {
 }
 
 
-
 /*Hlavolam je vyrieöen˝, keÔ je ËervenÈ auto (v smere jeho jazdy) na okraji kriûovatky a mÙûe sa z nej dostaù von.
 Predpokladajte, ûe ËervenÈ auto je vûdy otoËenÈ horizont·lne a smeruje doprava.*/
  unsigned short checkForFinal(Node* node) {
@@ -310,32 +385,6 @@ Node *moveRedToFinal(Node* node, const unsigned short& i) {
 }
 
 
-/*kontrola pociatocneho stavu - skontroluje, ci kazde auto pri vzniku je na korektnej pozicii,
-zle umiestnene auta nevzniknu a nebudu umiestnene na hracie pole
-predpokladame, ze uzivatel umiestni auta tak, ze sa nebudu prekryvat*/
-Car carValidation(std::string color, unsigned short xAxis, unsigned short yAxis, unsigned short size, char move) {
-	if (color == "cervene" && move != 'h') {
-		std::cout << "red car must be horizontal" << std::endl;
-
-		exit(0);
-	}
-
-	if (size != 2 && size != 3) {
-		std::cout << "wrong size of car" << std::endl;
-
-		exit(0);
-	}
-
-	if ((move == 'h' && xAxis + size - 1 > BOUNDARIES) || (move == 'v' && yAxis + size - 1 > BOUNDARIES) || xAxis >= BOUNDARIES || yAxis >= BOUNDARIES) {
-		std::cout << "out of bounds" << std::endl;
-
-		exit(0);
-	}
-
-	std::cout << color << " car is positioned correctly" << std::endl;
-
-	return Car(color, xAxis, yAxis, size, move);
-}
 
 
 //obrati linked list, ktory je od final node k root tak, aby bol od root k final node;
@@ -361,38 +410,6 @@ Node* reverse(Node* root)
 }
 
 //funckia na vyvorenie pociatocneho stavu;
-Node* loadCars() {
-	Node* root = new Node;
-
-	std::string inputString = "cervene 1 1 2 h zelene 4 3 3 v modre 0 0 2 v";
-
-	//docasna zmena std::cin aby citalo zo stringu - !!! len pre DEBUG !!!
-	std::istringstream iss(inputString);
-	std::cin.rdbuf(iss.rdbuf());
-
-	std::string color;
-	unsigned short xAxis;
-	unsigned short yAxis;
-	unsigned short size;
-	char move;
-
-	while (std::cin >> color >> xAxis >> yAxis >> size >> move) {
-		Car car = carValidation(color, xAxis, yAxis, size, move);
-
-		root->cars.push_back(car);
-
-	}
-
-	return root;
-}
-
-std::ostream& operator<<(std::ostream& os, const Node *node) {
-	for (auto& car : node->cars) {
-		os << car.color << " x: " << car.xAxis << " y: " << car.yAxis << " size: " << car.size << " direction: " << car.dir << std::endl;
-	}
-
-	return os;
-}
 
 /*
 zabezpecenie vsetkych moznych pohybov, pre kazde auto vyskusa kazdy pohyb o kazdy mozny pocet policok
@@ -406,10 +423,12 @@ Node* searchAlgorithm(Node* root) {
 	if (index != -1) {
 		root->pNode = moveRedToFinal(root, index);
 
-		visited.push_back(root->pNode);
+		visited.insert(root);
+		visited.insert(root->pNode);
 
 		return root;
 	}
+
 
 	//pracuje s "najdenymi nodes"
 	while (!nodesToProcess.empty()) {
@@ -502,7 +521,7 @@ Node* searchAlgorithm(Node* root) {
 		}
 
 
-		visited.push_back(node);
+		visited.insert(node);
 	}
 
 
@@ -519,6 +538,7 @@ Node* searchAlgorithm(Node* root) {
 
 	return reverse(finalNode);
 }
+
 
 
 int main(int argc, char* argv[]) {
@@ -562,8 +582,6 @@ int main(int argc, char* argv[]) {
 
 	std::cout << "konec pico" << std::endl;*/
 
-
-
 	/*Car car = Car("cervene", 1, 1, 2, 'h');
 	Car car1 = Car("cervene", 1, 1, 2, 'h');
 
@@ -598,11 +616,21 @@ int main(int argc, char* argv[]) {
 
 
 
-	Node *root = loadCars();
+	Node* root = loadCars();
 
-	nodesToProcess.push_back(root);
+	//nodesToProcess.push_back(root);
 
 
+	std::unordered_set<Node*>::const_iterator got = visited.find(node1);
+
+	if (got == visited.end()) {
+		std::cout << "neexistuje" << std::endl;
+	}
+	else {
+		std::cout << "uz existuje" << std::endl;
+	}
+
+	return 0;
 
 	//ak sa nenajde riesenie, tak sa len vypise pociatocny stav a sprava
 	if (root->pNode == nullptr) {
