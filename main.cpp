@@ -36,7 +36,7 @@ std::ostream& operator<<(std::ostream& os, const Node* node) {
 
 //funkcia vrati a odstrani prvy/posledny prvok vectora - zalezi od typu search algoritmu
 //pointer na funckiu sa v main nastavi na korektnu implementaciu pop, podla pouziteho search algritmu
-Node* (*pop)(std::vector<Node*>& vec);
+Node* (*pop)(std::vector<Node*>&);
 
 //vec.back() je vlastne stack.top()
 Node* popDfs(std::vector<Node*>& vec) {
@@ -72,21 +72,18 @@ Car carValidation(std::string color, unsigned short xAxis, unsigned short yAxis,
 		exit(0);
 	}
 
-	if ((move == 'h' && xAxis + size - 1 > BOUNDARIES) || (move == 'v' && yAxis + size - 1 > BOUNDARIES) || xAxis >= BOUNDARIES || yAxis >= BOUNDARIES) {
+	if ((move == 'h' && xAxis + size - 1 > BOUNDARIES) || (move == 'v' && yAxis + size - 1 > BOUNDARIES) || xAxis > BOUNDARIES || yAxis > BOUNDARIES) {
 		std::cout << "out of bounds" << std::endl;
 
 		exit(0);
 	}
 
-	std::cout << color << " car is positioned correctly" << std::endl;
-
 	return Car(color, xAxis, yAxis, size, move);
 }
 
-Node* loadCars() {
+//funckia na vyvorenie pociatocneho stavu;
+Node* loadCars(std::string inputString) {
 	Node* root = new Node;
-
-	std::string inputString = "cervene 1 1 2 h zelene 4 3 3 v modre 0 0 2 v";
 
 	//docasna zmena std::cin aby citalo zo stringu - !!! len pre DEBUG !!!
 	std::istringstream iss(inputString);
@@ -121,7 +118,7 @@ unsigned short up(const Node* node, std::string color, unsigned short n) {
 	Car car;
 	unsigned short index = 0;
 
-	for (size_t i = 0; i < node->cars.size(); i++)
+	for (unsigned short i = 0; i < node->cars.size(); i++)
 	{
 		if (node->cars.at(i).color == color) {
 			car = node->cars.at(i);
@@ -133,7 +130,7 @@ unsigned short up(const Node* node, std::string color, unsigned short n) {
 
 	
 	if(car.yAxis - n < 0){
-		std::cout << "out of bounds" << std::endl;
+		//std::cout << "out of bounds" << std::endl;
 		return -1;
 	}
 		
@@ -143,13 +140,13 @@ unsigned short up(const Node* node, std::string color, unsigned short n) {
 
 			//ak sa nad autom uz nachadza nejake ine auto otocene vertikalne
 			if (c.dir == 'v' && c.xAxis == car.xAxis && c.yAxis + c.size <= car.yAxis && c.yAxis + c.size > car.yAxis - n) {
-				std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
+				//std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
 				return -1;
 				
 			}
 			//ak sa nad autom nachadza ine auto otocene horizontalne
 			else if (c.dir == 'h' && c.xAxis <= car.xAxis && c.xAxis + c.size > car.xAxis && c.yAxis < car.yAxis && c.yAxis >= car.yAxis - n) {
-				std::cout << "prekaza auto otocene v inom smere" << std::endl;
+				//std::cout << "prekaza auto otocene v inom smere" << std::endl;
 				return -1;
 			}
 		}
@@ -157,7 +154,7 @@ unsigned short up(const Node* node, std::string color, unsigned short n) {
 	
 
 
-	std::cout << "auto sa uspesne pohlo" << std::endl;
+	//std::cout << "auto sa uspesne pohlo" << std::endl;
 
 	return index;
 }
@@ -166,7 +163,7 @@ unsigned short down(const Node* node, std::string color, unsigned short n) {
 	Car car;
 	unsigned short index = 0;
 
-	for (size_t i = 0; i < node->cars.size(); i++)
+	for (unsigned short i = 0; i < node->cars.size(); i++)
 	{
 		if (node->cars.at(i).color == color) {
 			car = node->cars.at(i);
@@ -178,7 +175,7 @@ unsigned short down(const Node* node, std::string color, unsigned short n) {
 
 	
 	if (car.yAxis + car.size + n - 1 > BOUNDARIES ) {
-		std::cout << "out of bounds" << std::endl;
+		//std::cout << "out of bounds" << std::endl;
 		return -1;
 	}
 
@@ -188,12 +185,12 @@ unsigned short down(const Node* node, std::string color, unsigned short n) {
 
 			//ak sa pod autom uz nachadza nejake ine auto otocene vertikalne
 			if (c.dir == 'v' && c.xAxis == car.xAxis && c.yAxis >= car.yAxis + car.size && c.yAxis < car.yAxis + car.size + n) {
-				std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
+				//std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
 				return -1;
 			}
 			//ak sa pod autom nachadza ine auto otocene horizontalne
 			else if (c.dir == 'h' && c.xAxis <= car.xAxis && c.xAxis + c.size > car.xAxis && c.yAxis > car.yAxis && c.yAxis < car.yAxis + car.size + n) {
-				std::cout << "prekaza auto otocene v inom smere" << std::endl;
+				//std::cout << "prekaza auto otocene v inom smere" << std::endl;
 				return -1;
 			}
 		}
@@ -201,7 +198,7 @@ unsigned short down(const Node* node, std::string color, unsigned short n) {
 	
 
 
-	std::cout << "auto sa uspesne pohlo" << std::endl;
+	//std::cout << "auto sa uspesne pohlo" << std::endl;
 
 	return index;
 }
@@ -210,7 +207,7 @@ unsigned short left(const Node* node, std::string color, unsigned short n) {
 	Car car;
 	unsigned short index = 0;
 
-	for (size_t i = 0; i < node->cars.size(); i++)
+	for (unsigned short i = 0; i < node->cars.size(); i++)
 	{
 		if (node->cars.at(i).color == color) {
 			car = node->cars.at(i);
@@ -222,7 +219,7 @@ unsigned short left(const Node* node, std::string color, unsigned short n) {
 
 	
 	if (car.xAxis - n < 0) {
-		std::cout << "out of bounds" << std::endl;
+		//std::cout << "out of bounds" << std::endl;
 		return -1;
 	}
 
@@ -232,12 +229,12 @@ unsigned short left(const Node* node, std::string color, unsigned short n) {
 
 			//ak sa nad autom uz nachadza nejake ine auto otocene vertikalne
 			if (c.dir == 'h' && c.yAxis == car.yAxis && c.xAxis + c.size <= car.xAxis && c.xAxis + c.size > car.xAxis - n) {
-				std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
+				//std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
 				return -1;
 			}
 			//ak sa nad autom nachadza ine auto otocene horizontalne
 			else if (c.dir == 'v' && c.yAxis <= car.yAxis && c.yAxis + c.size > car.yAxis && c.xAxis < car.xAxis && c.xAxis >= car.xAxis - n) {
-				std::cout << "prekaza auto otocene v inom smere" << std::endl;
+				//std::cout << "prekaza auto otocene v inom smere" << std::endl;
 				return -1;
 			}
 		}
@@ -245,7 +242,7 @@ unsigned short left(const Node* node, std::string color, unsigned short n) {
 	
 
 
-	std::cout << "auto sa uspesne pohlo" << std::endl;
+	//std::cout << "auto sa uspesne pohlo" << std::endl;
 
 	return index;
 }
@@ -254,7 +251,7 @@ unsigned short right(const Node* node, std::string color, unsigned short n) {
 	Car car;
 	unsigned short index = 0;
 
-	for (size_t i = 0; i < node->cars.size(); i++)
+	for (unsigned short i = 0; i < node->cars.size(); i++)
 	{
 		if (node->cars.at(i).color == color) {
 			car = node->cars.at(i);
@@ -266,7 +263,7 @@ unsigned short right(const Node* node, std::string color, unsigned short n) {
 
 	
 	if (car.xAxis + car.size + n - 1 > BOUNDARIES) {
-		std::cout << "out of bounds" << std::endl;
+		//std::cout << "out of bounds" << std::endl;
 		return -1;
 	}
 
@@ -276,19 +273,19 @@ unsigned short right(const Node* node, std::string color, unsigned short n) {
 
 			//ak sa pod autom uz nachadza nejake ine auto otocene vertikalne
 			if (c.dir == 'h' && c.yAxis == car.yAxis && c.xAxis >= car.xAxis + car.size && c.xAxis < car.xAxis + car.size + n) {
-				std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
+				//std::cout << "prekaza auto otocene v tom istom smere" << std::endl;
 				return -1;
 			}
 			//ak sa pod autom nachadza ine auto otocene horizontalne
 			else if (c.dir == 'v' && c.yAxis <= car.yAxis && c.yAxis + c.size > car.yAxis && c.xAxis > car.xAxis && c.xAxis < car.xAxis + car.size + n) {
-				std::cout << "prekaza auto otocene v inom smere" << std::endl;
+				//std::cout << "prekaza auto otocene v inom smere" << std::endl;
 				return -1;
 			}
 		}
 	}
 	
 
-	std::cout << "auto sa uspesne pohlo" << std::endl;
+	//std::cout << "auto sa uspesne pohlo" << std::endl;
 
 	return index;
 }
@@ -342,7 +339,7 @@ Predpokladajte, že èervené auto je vždy otoèené horizontálne a smeruje doprava.*
 	unsigned short redY = 0;
 	unsigned short index = 0;
 
-	for (size_t i = 0; i < node->cars.size(); i++)
+	for (unsigned short i = 0; i < node->cars.size(); i++)
 	{
 		if (node->cars.at(i).color == "cervene") {
 			redX = node->cars.at(i).xAxis;
@@ -359,31 +356,31 @@ Predpokladajte, že èervené auto je vždy otoèené horizontálne a smeruje doprava.*
 		//ak je ine auto v tom istom riadku
 		if (c.dir == 'h' && c.yAxis == redY && c.xAxis > redX) {
 			std::cout << "cervene sa nidky nedostane z parkoviska" << std::endl;
-			return 0;
+			return -1;
 		}
 
 		//ak ine auto zasahuje do riadku
 		if (c.dir == 'v' && c.xAxis > redX && c.yAxis + c.size > redY && c.yAxis <= redY) {
-			std::cout << "cervene sa nemoze dostat z parkoviska" << std::endl;
-			return 0;
+			//std::cout << "cervene sa nemoze dostat z parkoviska" << std::endl;
+			return -1;
 		}
 	}
 
-	std::cout << "cervene auto moze vyjst z parkoviska" << std::endl;
+	//std::cout << "cervene auto moze vyjst z parkoviska" << std::endl;
 
 
-	return 1;
+	return index;
 }
 
-Node *moveRedToFinal(Node* node, const unsigned short& i) {
+ //vrati novy node, kde bude cervene auto na finalnej pozicii
+Node *moveRedToFinal(Node* node, const unsigned short& redIndex) {
 	Node* newNode = new Node;
 	newNode->cars = node->cars;
 	
-	newNode->cars.at(i).xAxis = 4;
+	newNode->cars.at(redIndex).xAxis = 4;
 
 	return newNode;
 }
-
 
 
 
@@ -409,7 +406,6 @@ Node* reverse(Node* root)
 	return prev;
 }
 
-//funckia na vyvorenie pociatocneho stavu;
 
 /*
 zabezpecenie vsetkych moznych pohybov, pre kazde auto vyskusa kazdy pohyb o kazdy mozny pocet policok
@@ -417,11 +413,15 @@ takzvane to zrobi to co chce uloha a vrati to root s cestou k final nodu, alebo 
 */
 Node* searchAlgorithm(Node* root) {
 
-	//ak sa da s cervenym autom vyjst z parkoviska v pociatocnom stave;
-	unsigned short index = checkForFinal(root);
+	Node* finalNode = nullptr;
+	Node* node = nullptr;
+	bool finalFound = false;
 
-	if (index != -1) {
-		root->pNode = moveRedToFinal(root, index);
+	//ak sa da s cervenym autom vyjst z parkoviska v pociatocnom stave;
+	unsigned short redIndex = checkForFinal(root);
+
+	if (redIndex != 0xffff) {
+		root->pNode = moveRedToFinal(root, redIndex);
 
 		visited.insert(root);
 		visited.insert(root->pNode);
@@ -433,58 +433,18 @@ Node* searchAlgorithm(Node* root) {
 	//pracuje s "najdenymi nodes"
 	while (!nodesToProcess.empty()) {
 		//z datastructure, ktora sa aktualne pouziva vyberie node, ktory ma nasledovat a s nim pracuje 
-		Node* node = pop(nodesToProcess);
+		node = pop(nodesToProcess);
 
 		//pre kazde auto
-		for (auto& car : node->cars) 
+		for (auto& car : node->cars)
 		{
 			//kazdy pohyb
-			if (car.dir == 'h') {
-				//kazdy pohyb od 1 do 4
-				for (size_t n = 1; n <= 4; n++)
-				{
-					unsigned short index = left(node, car.color, n);
-
-					if (index ==  -1)
-					{
-						break;
-					}
-
-					Node *newNode = new Node;
-					newNode->cars = node->cars;
-
-					newNode = moveLeft(newNode, index, n);
-
-					newNode->pNode = node;
-
-					nodesToProcess.push_back(newNode);
-				}
-
-				for (size_t n = 1; n <= 4; n++)
-				{
-					unsigned short index = right(node, car.color, n);
-
-					if (index == -1)
-					{
-						break;
-					}
-
-					Node* newNode = new Node;
-					newNode->cars = node->cars;
-
-					newNode = moveRight(newNode, index, n);
-
-					newNode->pNode = node;
-
-					nodesToProcess.push_back(newNode);
-				}
-			}
-			else {
+			if (car.dir == 'v') {
 				for (size_t n = 1; n <= 4; n++)
 				{
 					unsigned short index = up(node, car.color, n);
 
-					if (index == -1)
+					if (index == 0xffff)
 					{
 						break;
 					}
@@ -494,16 +454,49 @@ Node* searchAlgorithm(Node* root) {
 
 					newNode = moveUp(newNode, index, n);
 
+					newNode->color = car.color;
+					newNode->dir = 'u';
+					newNode->n = n;
+
+					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
+
+					if (alreadyVisited != visited.end()) {
+						//std::cout << "uz existuje" << std::endl;
+
+						delete newNode;
+
+						continue;
+					}
+
 					newNode->pNode = node;
+
+					/*ak sa v novo vygenerovanom stave moze cervene auto dostat z parkoviska, tak vytvori stav v ktorom posunie cervene auto na finalnu poziciu,
+					pre tento stav nastavi pointer na newNode a ukonci sa vyhladavanie grafu
+					pre pohyby aut, ktore su otocene horizontalne to netreba kontrolovat, pretoze ziaden horizontalny pohyb auta neovplyvni trasu pre cervene auto,
+					iba ze by bolo v tom istom riadku ako je cervene auto, co je ale skontrolovane pred zaciatkom search algoritmu*/
+
+					redIndex = checkForFinal(newNode);
+
+					if (redIndex != 0xffff)
+					{
+						finalNode = moveRedToFinal(newNode, redIndex);
+
+						finalNode->pNode = newNode;
+
+						finalFound = true;
+						break;
+					}
 
 					nodesToProcess.push_back(newNode);
 				}
+
+				if (finalFound) { break; }
 
 				for (size_t n = 1; n <= 4; n++)
 				{
 					unsigned short index = down(node, car.color, n);
 
-					if (index == -1)
+					if (index == 0xffff)
 					{
 						break;
 					}
@@ -513,28 +506,130 @@ Node* searchAlgorithm(Node* root) {
 
 					newNode = moveDown(newNode, index, n);
 
+					newNode->color = car.color;
+					newNode->dir = 'd';
+					newNode->n = n;
+
+					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
+
+					if (alreadyVisited != visited.end()) {
+						//std::cout << "uz existuje" << std::endl;
+
+						delete newNode;
+
+						continue;
+					}
+
+					newNode->pNode = node;
+
+					redIndex = checkForFinal(newNode);
+
+					if (redIndex != 0xffff)
+					{
+						finalNode = moveRedToFinal(newNode, redIndex);
+
+						finalNode->pNode = newNode;
+
+						finalFound = true;
+						break;
+					}
+
+					nodesToProcess.push_back(newNode);
+				}
+
+				if (finalFound) { break; }
+			}
+			else
+			{
+				//kazdy pohyb od 1 do 4
+				for (size_t n = 1; n <= 4; n++)
+				{
+					unsigned short index = left(node, car.color, n);
+
+					if (index == 0xffff)
+					{
+						break;
+					}
+
+					Node* newNode = new Node;
+					newNode->cars = node->cars;
+
+					newNode = moveLeft(newNode, index, n);
+					
+					newNode->color = car.color;
+					newNode->dir = 'l';
+					newNode->n = n;
+
+					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
+
+					if (alreadyVisited != visited.end()) {
+						//std::cout << "uz existuje" << std::endl;
+
+						delete newNode;
+
+						continue;
+					}
+
+					newNode->pNode = node;
+
+					//ak este nemozno hru ukoncit, tak ho prida do stack/queue a search algoritmus pokracuje dalej
+					nodesToProcess.push_back(newNode);
+				}
+
+				for (size_t n = 1; n <= 4; n++)
+				{
+					unsigned short index = right(node, car.color, n);
+
+					if (index == 0xffff)
+					{
+						break;
+					}
+
+					Node* newNode = new Node;
+					newNode->cars = node->cars;
+
+					newNode = moveRight(newNode, index, n);
+					
+					newNode->color = car.color;
+					newNode->dir = 'r';
+					newNode->n = n;
+
+					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
+
+					if (alreadyVisited != visited.end()) {
+						//std::cout << "uz existuje" << std::endl;
+
+						delete newNode;
+
+						continue;
+					}
+
 					newNode->pNode = node;
 
 					nodesToProcess.push_back(newNode);
 				}
 			}
+
+		}
+
+		visited.insert(node);
+
+		if (finalFound)
+		{
+			//ulozi final node do visited, len kvoli tomu, aby sa pri ukonceni programu mohla vymazat
+			visited.insert(finalNode);
+
+			break;
 		}
 
 
-		visited.insert(node);
 	}
 
 
 	/*
-	dokoncit: kontrolu, ci uz sa nenachadza vo visited
-	kontrolu, ci sa neda dostat do final nodu, umiestnit na vhodne miesto
+	pridat check ci cervene auto neni blokovane horizontalnym autom v tom istom yAxis
 	a teoreticky by to malo fahcat
 	*/
-
-
-
-	Node* finalNode = nullptr;
-
 
 	return reverse(finalNode);
 }
@@ -542,95 +637,37 @@ Node* searchAlgorithm(Node* root) {
 
 
 int main(int argc, char* argv[]) {
-	std::cout << "zadat farbu, x polohu, y polohu, velkost, smer pohybu" << std::endl;
-
-	/*Car car = carValidation("cervene", 1, 1, 2, 'h');
-	Car car1 = carValidation("zelene", 4, 3, 3, 'v');
-	Car car2 = carValidation("modre", 0, 0, 2, 'v');
-
-	//Car car1 = carValidation("modre", 2, 1, 2, 'v');
-
-	std::cout << car.color << std::endl;
-
-	Node *root = new Node;
-
-	root->cars.push_back(car);
-	root->cars.push_back(car1);
-	root->cars.push_back(car2);
 	
-
-	std::cout << checkForFinal(*root) << std::endl;
-
-	root->pNode = up(*root, "zelene", 1);
-
-	Node *temp = root;
-
-    temp->pNode = up(*temp, "zelene", 1);
-
-	temp = temp->pNode;
-
-    temp->pNode = up(*temp, "zelene", 1);
-
-
-	temp = root;
-
-	while (temp != nullptr) {
-		std::cout << temp->cars.at(1).yAxis << std::endl;
-
-		temp = temp->pNode;
-	}
-
-	std::cout << "konec pico" << std::endl;*/
-
-	/*Car car = Car("cervene", 1, 1, 2, 'h');
-	Car car1 = Car("cervene", 1, 1, 2, 'h');
-
-
-	Node node = Node();
-	Node node1 = Node();
-
-	node.cars.push_back(car);
-	node1.cars.push_back(car1);
-
-
-	if (node == node1) {
-		std::cout <<  "rovnaju sa" << std::endl;
-
-	}*/
-
-
+	//spracovanie argumentov zadanych v CLI....nastavenie DFS / BFS a zvolenie scenara
 	if (argc == 1) {
 		std::cout << "v CLI zadajte typ prehladavacieho algoritmu (DFS / BFS)" << std::endl;
 
 		return 1;
 	}
 
+	std::string stringArg(argv[1]);
 
-	if (argv[1] == "DFS") {
+	if (stringArg == "DFS") {
 		pop = popDfs;
 	}
-	else if(argv[1] == "BFS")
+	else if(stringArg == "BFS")
 	{
 		pop = popBfs;
 	}
 
 
 
-	Node* root = loadCars();
 
-	//nodesToProcess.push_back(root);
+	std::string inputString = "cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h";
+	//std::string inputString = "oranzove 0 0 2 h zlte 0 1 3 v ruzove 0 4 2 v cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
 
 
-	std::unordered_set<Node*>::const_iterator got = visited.find(node1);
 
-	if (got == visited.end()) {
-		std::cout << "neexistuje" << std::endl;
-	}
-	else {
-		std::cout << "uz existuje" << std::endl;
-	}
+	Node* root = loadCars(inputString);
 
-	return 0;
+	nodesToProcess.push_back(root);
+
+	root = searchAlgorithm(root);
 
 	//ak sa nenajde riesenie, tak sa len vypise pociatocny stav a sprava
 	if (root->pNode == nullptr) {
@@ -640,11 +677,20 @@ int main(int argc, char* argv[]) {
 	}
 
 	//vypisanie priebehu od pociatocneho stavu po finalny
-	while (root != nullptr) {
-		std::cout << root << std::endl;
+	std::cout << root << std::endl;
 
+	while (root->pNode != nullptr) {
 		root = root->pNode;
+
+		if (root->pNode == nullptr) { break; }
+
+		std::cout << root->color << " " << root->dir << " " << root->n << " " << std::endl;
+
 	}
+
+	std::cout << std::endl << root << std::endl;
+
+
 
 	//uvolnenie pamate na konci programu
 	for (auto& node : visited)
@@ -652,6 +698,10 @@ int main(int argc, char* argv[]) {
 		delete node;
 	}
 
+	for (auto& node : nodesToProcess)
+	{
+		delete node;
+	}
 
 	return 0;
 }

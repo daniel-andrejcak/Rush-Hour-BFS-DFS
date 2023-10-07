@@ -43,6 +43,9 @@ public:
 
 	std::vector<Car> cars;
 	Node* pNode = nullptr;
+	std::string color;
+	char dir;
+	unsigned short n;
 
 	Node() {};
 
