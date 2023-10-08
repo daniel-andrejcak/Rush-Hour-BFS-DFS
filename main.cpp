@@ -13,9 +13,9 @@ ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu na
 #include"Header.h"
 
 
-
+//max rozmer hracej plochy - suradnice zacinaju 0,0
 unsigned short BOUNDARIES = 5;
-int x = 0;
+unsigned short MAXDEPTH = 7;
 
 
 std::ostream& operator<<(std::ostream& os, const Node* node) {
@@ -444,6 +444,13 @@ Node* searchAlgorithm(Node* root) {
 		//z datastructure, ktora sa aktualne pouziva vyberie node, ktory ma nasledovat a s nim pracuje 
 		node = pop(nodesToProcess);
 
+		if (node->depth == MAXDEPTH)
+		{
+			delete node;
+
+			continue;
+		}
+
 		//pre kazde auto
 		for (auto& car : node->cars)
 		{
@@ -469,16 +476,16 @@ Node* searchAlgorithm(Node* root) {
 
 					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
 
-					if (alreadyVisited != visited.end()) {
-						//std::cout << "uz existuje" << std::endl;
+					//if (alreadyVisited != visited.end()) {
+					//	//std::cout << "uz existuje" << std::endl;
 
-						x++;
-						delete newNode;
+					//	delete newNode;
 
-						continue;
-					}
+					//	continue;
+					//}
 
 					newNode->pNode = node;
+					newNode->depth = node->depth + 1;
 
 					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl; 
 
@@ -524,18 +531,18 @@ Node* searchAlgorithm(Node* root) {
 
 					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
 
-					if (alreadyVisited != visited.end()) {
-						//std::cout << "uz existuje" << std::endl;
+					//if (alreadyVisited != visited.end()) {
+					//	//std::cout << "uz existuje" << std::endl;
 
-						x++;
-						delete newNode;
+					//	delete newNode;
 
-						continue;
-					}
+					//	continue;
+					//}
 
 					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl;
 
 					newNode->pNode = node;
+					newNode->depth = node->depth + 1;
 
 
 					redIndex = checkForFinal(newNode);
@@ -578,17 +585,18 @@ Node* searchAlgorithm(Node* root) {
 
 					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
 
-					if (alreadyVisited != visited.end()) {
-						//std::cout << "uz existuje" << std::endl;
+					//if (alreadyVisited != visited.end()) {
+					//	//std::cout << "uz existuje" << std::endl;
 
-						x++;
-						delete newNode;
+					//	delete newNode;
 
-						continue;
-					}
+					//	continue;
+					//}
 					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl;
 
 					newNode->pNode = node;
+					newNode->depth = node->depth + 1;
+
 
 					//ak este nemozno hru ukoncit, tak ho prida do stack/queue a search algoritmus pokracuje dalej
 					nodesToProcess.push_back(newNode);
@@ -614,18 +622,19 @@ Node* searchAlgorithm(Node* root) {
 
 					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
 
-					if (alreadyVisited != visited.end()) {
-						//std::cout << "uz existuje" << std::endl;
+					//if (alreadyVisited != visited.end()) {
+					//	//std::cout << "uz existuje" << std::endl;
 
-						x++;
-						delete newNode;
+					//	delete newNode;
 
-						continue;
-					}
+					//	continue;
+					//}
 					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl;
 
 
 					newNode->pNode = node;
+					newNode->depth = node->depth + 1;
+
 
 					nodesToProcess.push_back(newNode);
 				}
@@ -676,13 +685,8 @@ int main(int argc, char* argv[]) {
 	}
 
 
-	//dokoncit check ci cervene auto neblokuje horizontalne auto,
-	//spravit kontrolu ked final node je nullptr
-
-
 	//std::string inputString = "cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
 	std::string inputString = "oranzove 0 0 2 h zlte 0 1 3 v ruzove 0 4 2 v cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
-
 
 
 
@@ -693,8 +697,8 @@ int main(int argc, char* argv[]) {
 	root = searchAlgorithm(root);
 
 	//ak sa nenajde riesenie, tak sa len vypise pociatocny stav a sprava
-	if (root->pNode == nullptr) {
-		std::cout << root << "nenaslo sa riesenie" << std::endl;
+	if (root == nullptr) {
+		std::cout << "nenaslo sa riesenie" << std::endl;
 
 		return 1;
 	}
@@ -702,7 +706,10 @@ int main(int argc, char* argv[]) {
 	//vypisanie priebehu od pociatocneho stavu po finalny
 	std::cout << root << std::endl;
 
+	int x = 0;
+
 	while (root->pNode != nullptr) {
+		x += 1;
 		root = root->pNode;
 
 		std::cout << colorToString(root->color) << " " << root->dir << " " << root->n << " " << std::endl;
@@ -711,6 +718,7 @@ int main(int argc, char* argv[]) {
 
 	std::cout << std::endl << root << std::endl;
 
+	std::cout << x << std::endl;
 
 
 	//uvolnenie pamate na konci programu

@@ -78,19 +78,23 @@ class Node {
 public:
 
 	std::vector<Car> cars;
+	
 	Node* pNode = nullptr;
+
 	Color color = Color::NULLCOLOR;
 	char dir = 0;
 	unsigned short n = 0;
+
+	unsigned short depth = 0;
 
 	Node() {};
 
 	~Node() {};
 
 
-	bool operator==(const Node*& other) const {
+	/*bool operator==(const Node*& other) const {
 		return cars == other->cars;
-	}	
+	}	*/
 };
 
 
