@@ -3,8 +3,8 @@ bude existovat queue, uzol a sa dostane do queue, zacne sa spracovat. spracovat 
 ktore mozu nasledovat, reprezentovane uzlami daju DO QUEUE NA KONIEC a to zabezpeci ze to bude vyhladavanie do sirky
 ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu nastat sa budu davat DO STACKU NA ZACIATOK, tak to bude prehliadavanie do hlbky*/
 
-#include<algorithm>
 #include<iostream>
+#include<map>
 #include<sstream>
 #include<string>
 #include<unordered_set>
@@ -15,19 +15,12 @@ ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu na
 
 
 unsigned short BOUNDARIES = 5;
-
-
-struct CustomNodeEqual {
-	bool operator()(const Node* node1, const Node* node2) const {
-
-		return node1->cars == node2->cars;
-	}
-};
+int x = 0;
 
 
 std::ostream& operator<<(std::ostream& os, const Node* node) {
 	for (auto& car : node->cars) {
-		os << car.color << " x: " << car.xAxis << " y: " << car.yAxis << " size: " << car.size << " direction: " << car.dir << std::endl;
+		os << colorToString(car.color) << " x: " << car.xAxis << " y: " << car.yAxis << " size: " << car.size << " direction: " << car.dir << std::endl;
 	}
 
 	return os;
@@ -59,8 +52,8 @@ Node* popBfs(std::vector<Node*>& vec) {
 /*kontrola pociatocneho stavu - skontroluje, ci kazde auto pri vzniku je na korektnej pozicii,
 zle umiestnene auta nevzniknu a nebudu umiestnene na hracie pole
 predpokladame, ze uzivatel umiestni auta tak, ze sa nebudu prekryvat*/
-Car carValidation(std::string color, unsigned short xAxis, unsigned short yAxis, unsigned short size, char move) {
-	if (color == "cervene" && move != 'h') {
+Car carValidation(Color color, unsigned short xAxis, unsigned short yAxis, unsigned short size, char move) {
+	if (color == Color::CERVENE && move != 'h') {
 		std::cout << "red car must be horizontal" << std::endl;
 
 		exit(0);
@@ -81,6 +74,9 @@ Car carValidation(std::string color, unsigned short xAxis, unsigned short yAxis,
 	return Car(color, xAxis, yAxis, size, move);
 }
 
+
+
+
 //funckia na vyvorenie pociatocneho stavu;
 Node* loadCars(std::string inputString) {
 	Node* root = new Node;
@@ -96,7 +92,7 @@ Node* loadCars(std::string inputString) {
 	char move;
 
 	while (std::cin >> color >> xAxis >> yAxis >> size >> move) {
-		Car car = carValidation(color, xAxis, yAxis, size, move);
+		Car car = carValidation(stringToColor(color), xAxis, yAxis, size, move);
 
 		root->cars.push_back(car);
 
@@ -108,13 +104,12 @@ Node* loadCars(std::string inputString) {
 
 
 //unordered_set pre visited nodes, lebo vyuziva hash table na hladanie prvkov - rychlejsie ako prehladavanie celeho vectora
-std::unordered_set<Node*, std::hash<Node*>, CustomNodeEqual> visited;
+std::unordered_set<Node*, CustomNodeHash, CustomNodeEqual> visited;
 std::vector<Node*> nodesToProcess; //!!!premenovat!!!
 
 
-
 //kontrola ci je pohyb platny, vrati index auta, ktore sa ma pohnut o n, ak sa neda pohnut o n, vrati -1
-unsigned short up(const Node* node, std::string color, unsigned short n) {
+unsigned short up(const Node* node, Color color, unsigned short n) {
 	Car car;
 	unsigned short index = 0;
 
@@ -159,7 +154,7 @@ unsigned short up(const Node* node, std::string color, unsigned short n) {
 	return index;
 }
 
-unsigned short down(const Node* node, std::string color, unsigned short n) {
+unsigned short down(const Node* node, Color color, unsigned short n) {
 	Car car;
 	unsigned short index = 0;
 
@@ -203,7 +198,7 @@ unsigned short down(const Node* node, std::string color, unsigned short n) {
 	return index;
 }
 
-unsigned short left(const Node* node, std::string color, unsigned short n) {
+unsigned short left(const Node* node, Color color, unsigned short n) {
 	Car car;
 	unsigned short index = 0;
 
@@ -247,7 +242,7 @@ unsigned short left(const Node* node, std::string color, unsigned short n) {
 	return index;
 }
 
-unsigned short right(const Node* node, std::string color, unsigned short n) {
+unsigned short right(const Node* node, Color color, unsigned short n) {
 	Car car;
 	unsigned short index = 0;
 
@@ -341,7 +336,7 @@ Predpokladajte, že èervené auto je vždy otoèené horizontálne a smeruje doprava.*
 
 	for (unsigned short i = 0; i < node->cars.size(); i++)
 	{
-		if (node->cars.at(i).color == "cervene") {
+		if (node->cars.at(i).color == Color::CERVENE) {
 			redX = node->cars.at(i).xAxis;
 			redY = node->cars.at(i).yAxis;
 
@@ -353,16 +348,17 @@ Predpokladajte, že èervené auto je vždy otoèené horizontálne a smeruje doprava.*
 
 	for (auto& c : node->cars)
 	{
-		//ak je ine auto v tom istom riadku
-		if (c.dir == 'h' && c.yAxis == redY && c.xAxis > redX) {
-			std::cout << "cervene sa nidky nedostane z parkoviska" << std::endl;
-			return -1;
-		}
 
 		//ak ine auto zasahuje do riadku
 		if (c.dir == 'v' && c.xAxis > redX && c.yAxis + c.size > redY && c.yAxis <= redY) {
 			//std::cout << "cervene sa nemoze dostat z parkoviska" << std::endl;
 			return -1;
+		}
+		
+		//ak je ine auto v tom istom riadku
+		if (c.dir == 'h' && c.yAxis == redY && c.xAxis > redX) {
+			std::cout << "cervene sa nidky nedostane z parkoviska" << std::endl;
+			return -2;
 		}
 	}
 
@@ -376,6 +372,10 @@ Predpokladajte, že èervené auto je vždy otoèené horizontálne a smeruje doprava.*
 Node *moveRedToFinal(Node* node, const unsigned short& redIndex) {
 	Node* newNode = new Node;
 	newNode->cars = node->cars;
+
+	newNode->color = Color::CERVENE;
+	newNode->dir = 'r';
+	newNode->n = 4 - newNode->cars.at(redIndex).xAxis;
 	
 	newNode->cars.at(redIndex).xAxis = 4;
 
@@ -406,7 +406,6 @@ Node* reverse(Node* root)
 	return prev;
 }
 
-
 /*
 zabezpecenie vsetkych moznych pohybov, pre kazde auto vyskusa kazdy pohyb o kazdy mozny pocet policok
 takzvane to zrobi to co chce uloha a vrati to root s cestou k final nodu, alebo to vrati samotny root, ked nebude existovat riesenie
@@ -428,6 +427,16 @@ Node* searchAlgorithm(Node* root) {
 
 		return root;
 	}
+	//kontrola ci cervene auto neni blokovane horizontalnym autom
+	else if(redIndex == 0xfffe)
+	{
+		std::cout << "cervene auto sa nikdy nedostane z parkoviska" << std::endl;
+
+		delete root;
+
+		exit(1);
+
+	}
 
 
 	//pracuje s "najdenymi nodes"
@@ -440,7 +449,7 @@ Node* searchAlgorithm(Node* root) {
 		{
 			//kazdy pohyb
 			if (car.dir == 'v') {
-				for (size_t n = 1; n <= 4; n++)
+				for (unsigned short n = 1; n <= 4; n++)
 				{
 					unsigned short index = up(node, car.color, n);
 
@@ -463,12 +472,15 @@ Node* searchAlgorithm(Node* root) {
 					if (alreadyVisited != visited.end()) {
 						//std::cout << "uz existuje" << std::endl;
 
+						x++;
 						delete newNode;
 
 						continue;
 					}
 
 					newNode->pNode = node;
+
+					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl; 
 
 					/*ak sa v novo vygenerovanom stave moze cervene auto dostat z parkoviska, tak vytvori stav v ktorom posunie cervene auto na finalnu poziciu,
 					pre tento stav nastavi pointer na newNode a ukonci sa vyhladavanie grafu
@@ -492,7 +504,7 @@ Node* searchAlgorithm(Node* root) {
 
 				if (finalFound) { break; }
 
-				for (size_t n = 1; n <= 4; n++)
+				for (unsigned short n = 1; n <= 4; n++)
 				{
 					unsigned short index = down(node, car.color, n);
 
@@ -515,12 +527,16 @@ Node* searchAlgorithm(Node* root) {
 					if (alreadyVisited != visited.end()) {
 						//std::cout << "uz existuje" << std::endl;
 
+						x++;
 						delete newNode;
 
 						continue;
 					}
 
+					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl;
+
 					newNode->pNode = node;
+
 
 					redIndex = checkForFinal(newNode);
 
@@ -542,7 +558,7 @@ Node* searchAlgorithm(Node* root) {
 			else
 			{
 				//kazdy pohyb od 1 do 4
-				for (size_t n = 1; n <= 4; n++)
+				for (unsigned short n = 1; n <= 4; n++)
 				{
 					unsigned short index = left(node, car.color, n);
 
@@ -565,10 +581,12 @@ Node* searchAlgorithm(Node* root) {
 					if (alreadyVisited != visited.end()) {
 						//std::cout << "uz existuje" << std::endl;
 
+						x++;
 						delete newNode;
 
 						continue;
 					}
+					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl;
 
 					newNode->pNode = node;
 
@@ -576,7 +594,7 @@ Node* searchAlgorithm(Node* root) {
 					nodesToProcess.push_back(newNode);
 				}
 
-				for (size_t n = 1; n <= 4; n++)
+				for (unsigned short n = 1; n <= 4; n++)
 				{
 					unsigned short index = right(node, car.color, n);
 
@@ -599,10 +617,13 @@ Node* searchAlgorithm(Node* root) {
 					if (alreadyVisited != visited.end()) {
 						//std::cout << "uz existuje" << std::endl;
 
+						x++;
 						delete newNode;
 
 						continue;
 					}
+					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl;
+
 
 					newNode->pNode = node;
 
@@ -635,7 +656,6 @@ Node* searchAlgorithm(Node* root) {
 }
 
 
-
 int main(int argc, char* argv[]) {
 	
 	//spracovanie argumentov zadanych v CLI....nastavenie DFS / BFS a zvolenie scenara
@@ -656,10 +676,13 @@ int main(int argc, char* argv[]) {
 	}
 
 
+	//dokoncit check ci cervene auto neblokuje horizontalne auto,
+	//spravit kontrolu ked final node je nullptr
 
 
-	std::string inputString = "cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h";
-	//std::string inputString = "oranzove 0 0 2 h zlte 0 1 3 v ruzove 0 4 2 v cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
+	//std::string inputString = "cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
+	std::string inputString = "oranzove 0 0 2 h zlte 0 1 3 v ruzove 0 4 2 v cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
+
 
 
 
@@ -682,9 +705,7 @@ int main(int argc, char* argv[]) {
 	while (root->pNode != nullptr) {
 		root = root->pNode;
 
-		if (root->pNode == nullptr) { break; }
-
-		std::cout << root->color << " " << root->dir << " " << root->n << " " << std::endl;
+		std::cout << colorToString(root->color) << " " << root->dir << " " << root->n << " " << std::endl;
 
 	}
 
@@ -693,6 +714,7 @@ int main(int argc, char* argv[]) {
 
 
 	//uvolnenie pamate na konci programu
+
 	for (auto& node : visited)
 	{
 		delete node;
