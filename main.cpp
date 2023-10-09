@@ -14,7 +14,7 @@ ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu na
 
 
 //max rozmer hracej plochy - suradnice zacinaju 0,0
-unsigned short BOUNDARIES = 5;
+const unsigned short BOUNDARIES = 5;
 unsigned short MAXDEPTH = 0;
 
 
@@ -52,7 +52,7 @@ Node* popBfs(std::vector<Node*>& vec) {
 /*kontrola pociatocneho stavu - skontroluje, ci kazde auto pri vzniku je na korektnej pozicii,
 zle umiestnene auta nevzniknu a nebudu umiestnene na hracie pole
 predpokladame, ze uzivatel umiestni auta tak, ze sa nebudu prekryvat*/
-Car carValidation(Color color, unsigned short xAxis, unsigned short yAxis, unsigned short size, char move) {
+Car carValidation(const Color& color, const unsigned short xAxis, const unsigned short yAxis, const unsigned short size, const char move) {
 	if (color == Color::CERVENE && move != 'h') {
 		std::cout << "red car must be horizontal" << std::endl;
 
@@ -78,10 +78,10 @@ Car carValidation(Color color, unsigned short xAxis, unsigned short yAxis, unsig
 
 
 //funckia na vyvorenie pociatocneho stavu;
-Node* loadCars(std::string inputString) {
+Node* loadCars(const std::string& inputString) {
 	Node* root = new Node;
 
-	//docasna zmena std::cin aby citalo zo stringu - !!! len pre DEBUG !!!
+	//docasna zmena std::cin aby citalo zo stringu
 	std::istringstream iss(inputString);
 	std::cin.rdbuf(iss.rdbuf());
 
@@ -109,7 +109,7 @@ std::vector<Node*> nodesToProcess; //!!!premenovat!!!
 
 
 //kontrola ci je pohyb platny, vrati index auta, ktore sa ma pohnut o n, ak sa neda pohnut o n, vrati -1
-unsigned short up(const Node* node, Color color, unsigned short n) {
+unsigned short up(const Node* node, const Color& color, unsigned short n) {
 	Car car;
 	unsigned short index = 0;
 
@@ -154,7 +154,7 @@ unsigned short up(const Node* node, Color color, unsigned short n) {
 	return index;
 }
 
-unsigned short down(const Node* node, Color color, unsigned short n) {
+unsigned short down(const Node* node, const Color& color, unsigned short n) {
 	Car car;
 	unsigned short index = 0;
 
@@ -198,7 +198,7 @@ unsigned short down(const Node* node, Color color, unsigned short n) {
 	return index;
 }
 
-unsigned short left(const Node* node, Color color, unsigned short n) {
+unsigned short left(const Node* node, const Color& color, unsigned short n) {
 	Car car;
 	unsigned short index = 0;
 
@@ -242,7 +242,7 @@ unsigned short left(const Node* node, Color color, unsigned short n) {
 	return index;
 }
 
-unsigned short right(const Node* node, Color color, unsigned short n) {
+unsigned short right(const Node* node, const Color& color, unsigned short n) {
 	Car car;
 	unsigned short index = 0;
 
@@ -329,7 +329,7 @@ Node* moveRight(Node* node, unsigned short index, unsigned short n) {
 
 /*Hlavolam je vyriešený, keï je èervené auto (v smere jeho jazdy) na okraji križovatky a môže sa z nej dosta von.
 Predpokladajte, že èervené auto je vždy otoèené horizontálne a smeruje doprava.*/
- unsigned short checkForFinal(Node* node) {
+ unsigned short checkForFinal(const Node* node) {
 	unsigned short redX = 0;
 	unsigned short redY = 0;
 	unsigned short index = 0;
@@ -369,7 +369,7 @@ Predpokladajte, že èervené auto je vždy otoèené horizontálne a smeruje doprava.*
 }
 
  //vrati novy node, kde bude cervene auto na finalnej pozicii
-Node *moveRedToFinal(Node* node, const unsigned short& redIndex) {
+Node *moveRedToFinal(const Node* node, const unsigned short& redIndex) {
 	Node* newNode = new Node;
 	newNode->cars = node->cars;
 
@@ -387,22 +387,20 @@ Node *moveRedToFinal(Node* node, const unsigned short& redIndex) {
 //obrati linked list, ktory je od final node k root tak, aby bol od root k final node;
 Node* reverse(Node* root)
 {
-	// Initialize current, previous and next pointers
 	Node* current = root;
 	Node* prev = NULL;
 	Node* next = NULL;
 
-	while (current != NULL) {
-		// Store next
+	while (current != NULL)
+	{
 		next = current->pNode;
 
-		// Reverse current node's pointer
 		current->pNode = prev;
 
-		// Move pointers one position ahead.
 		prev = current;
 		current = next;
 	}
+
 	return prev;
 }
 
@@ -447,7 +445,7 @@ Node* searchAlgorithm(Node* root) {
 		//z datastructure, ktora sa aktualne pouziva vyberie node, ktory ma nasledovat a s nim pracuje 
 		node = pop(nodesToProcess);
 
-		if (node->depth == MAXDEPTH)
+		if (node->depth >= MAXDEPTH)
 		{
 			delete node;
 
@@ -458,7 +456,8 @@ Node* searchAlgorithm(Node* root) {
 		for (auto& car : node->cars)
 		{
 			//kazdy pohyb
-			if (car.dir == 'v') {
+			if (car.dir == 'v')
+			{
 				for (unsigned short n = 1; n <= 4; n++)
 				{
 					unsigned short index = up(node, car.color, n);
@@ -479,7 +478,8 @@ Node* searchAlgorithm(Node* root) {
 
 					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
 
-					if (alreadyVisited != visited.end()) {
+					if (alreadyVisited != visited.end())
+					{
 						//std::cout << "uz existuje" << std::endl;
 
 						delete newNode;
@@ -588,7 +588,8 @@ Node* searchAlgorithm(Node* root) {
 
 					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
 
-					if (alreadyVisited != visited.end()) {
+					if (alreadyVisited != visited.end())
+					{
 						//std::cout << "uz existuje" << std::endl;
 
 						delete newNode;
@@ -625,7 +626,8 @@ Node* searchAlgorithm(Node* root) {
 
 					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
 
-					if (alreadyVisited != visited.end()) {
+					if (alreadyVisited != visited.end())
+					{
 						//std::cout << "uz existuje" << std::endl;
 
 						delete newNode;
@@ -641,8 +643,9 @@ Node* searchAlgorithm(Node* root) {
 
 					nodesToProcess.push_back(newNode);
 				}
-			}
 
+				if (finalFound) { break; }
+			} 
 		}
 
 		visited.insert(node);
@@ -659,19 +662,16 @@ Node* searchAlgorithm(Node* root) {
 	}
 
 
-	/*
-	pridat check ci cervene auto neni blokovane horizontalnym autom v tom istom yAxis
-	a teoreticky by to malo fahcat
-	*/
-
 	return reverse(finalNode);
 }
 
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
 	
 	//spracovanie argumentov zadanych v CLI....nastavenie DFS / BFS a zvolenie scenara
-	if (argc == 1) {
+	if (argc == 1)
+	{
 		std::cout << "v CLI vyberte scenar (1 - 6), zadajte typ prehladavacieho algoritmu (DFS / BFS) a zadajte maximalny pozadovany pocet krokov" << std::endl;
 
 		return 1;
@@ -682,7 +682,8 @@ int main(int argc, char* argv[]) {
 
 	std::string stringArg(argv[2]);
 
-	if (stringArg == "DFS") {
+	if (stringArg == "DFS")
+	{
 		pop = popDfs;
 	}
 	else if(stringArg == "BFS")
@@ -698,7 +699,6 @@ int main(int argc, char* argv[]) {
 
 
 	MAXDEPTH = atoi(argv[3]);
-
 
 
 

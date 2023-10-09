@@ -1,9 +1,8 @@
 #pragma once
-//raz to bude treba vymenit za string
+
 enum class Color : unsigned char {
 	BIELE, ZLTE, ORANZOVE, CERVENE, RUZOVE, SVETLOMODRE, MODRE, ZELENE, SIVE, CIERNE, NULLCOLOR
 };
-
 
 static const std::map<std::string, Color> colorMap = {
 		{"biele", Color::BIELE},
@@ -37,6 +36,7 @@ std::string colorToString(const Color& color){
 
 	return std::string("nullcolor");
 }
+
 
 
 
