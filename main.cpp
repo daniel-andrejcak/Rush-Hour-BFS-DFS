@@ -12,12 +12,11 @@ ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu na
 
 #include"Header.h"
 
-
+//custom "return", ktory vypise do stdout ako pouzivat CLI args pre tento program
 #define RETURN(x) { \
     std::cout << "v CLI vyberte scenar (1 - 6), zadajte typ prehladavacieho algoritmu (DFS / BFS) a zadajte maximalny pozadovany pocet krokov (default je 30)" << std::endl; \
     return (x); \
 }
-
 
 
 //max rozmer hracej plochy - suradnice zacinaju 0,0
@@ -62,7 +61,7 @@ std::ostream& operator<<(std::ostream& os, const char dir) {
 //pointer na funckiu sa v main nastavi na korektnu implementaciu pop, podla pouziteho search algritmu
 Node* (*pop)(std::vector<Node*>&);
 
-//vec.back() je vlastne stack.top()
+//vec.back() funguje ako stack.top()
 Node* popDfs(std::vector<Node*>& vec) {
 	Node* node = vec.back();
 
@@ -413,8 +412,8 @@ Node *moveRedToFinal(const Node* node, const unsigned short& redIndex) {
 
 
 
-//obrati linked list, ktory je od final node k root tak, aby bol od root k final node;
-Node* reverse(Node* root)
+//obrati cestu od final node k root tak, aby bola od root k final node;
+Node* reversePath(Node* root)
 {
 	Node* current = root;
 	Node* prev = NULL;
@@ -433,15 +432,93 @@ Node* reverse(Node* root)
 	return prev;
 }
 
+
 /*
-zabezpecenie vsetkych moznych pohybov, pre kazde auto vyskusa kazdy pohyb o kazdy mozny pocet policok
-takzvane to zrobi to co chce uloha a vrati to root s cestou k final nodu, alebo to vrati samotny root, ked nebude existovat riesenie
+pre dane auto - car, v danom stave - node, sa pokusi vykonat pozadovany pohyb o 1 - 4 policka a novo vygenerovane stavy vlozi do stack alebo queue
 */
+Node* move(Node* node, const Car& car, unsigned short (*dirValidFunc)(const Node*, const Color&, unsigned short)) {
+	for (unsigned short n = 1; n <= 4; n++)
+	{
+		unsigned short index = (*dirValidFunc)(node, car.color, n);
+
+		//ak vrati index 0xffff tak to znamena ze auto sa uz nemohlo posunut dalej, tym padom nema zmysel skusat pohyb o viac policok
+		if (index == 0xffff)
+		{
+			return nullptr;
+		}
+
+		Node* newNode = new Node;
+		newNode->cars = node->cars;
+
+
+		if (dirValidFunc == &up)
+		{
+			newNode = moveUp(newNode, index, n);
+			newNode->dir = 'u';
+		}
+		else if (dirValidFunc == &down)
+		{
+			newNode = moveDown(newNode, index, n);
+			newNode->dir = 'd';
+		}
+		else if (dirValidFunc == &left)
+		{
+			newNode = moveLeft(newNode, index, n);
+			newNode->dir = 'l';
+		}
+		else if (dirValidFunc == &right)
+		{
+			newNode = moveRight(newNode, index, n);
+			newNode->dir = 'r';
+		}
+
+		newNode->color = car.color;
+		newNode->n = n;
+
+		std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
+
+		if (alreadyVisited != visited.end())
+		{
+
+			delete newNode;
+
+			continue;
+		}
+
+		newNode->pNode = node;
+		newNode->depth = node->depth + 1;
+
+
+		/*ak sa v novo vygenerovanom stave moze cervene auto dostat z parkoviska, tak vytvori stav v ktorom posunie cervene auto na finalnu poziciu,
+		pre tento stav nastavi pointer na newNode a ukonci sa vyhladavanie grafu
+		pre pohyby aut, ktore su otocene horizontalne to netreba kontrolovat, pretoze ziaden horizontalny pohyb auta neovplyvni trasu pre cervene auto,
+		iba ze by bolo v tom istom riadku ako je cervene auto, co je ale skontrolovane pred zaciatkom search algoritmu*/
+		if (dirValidFunc == &up || dirValidFunc == &down)
+		{
+			unsigned short redIndex = checkForFinal(newNode);
+
+			if (redIndex != 0xffff)
+			{
+				Node *finalNode = moveRedToFinal(newNode, redIndex);
+
+				finalNode->pNode = newNode;
+
+				return finalNode;
+			}
+		}
+
+		//ak este nemozno hru ukoncit, tak ho prida do stack/queue a dalej tvori pohyby
+		nodesToProcess.push_back(newNode);
+	}
+
+	return nullptr;
+}
+
+
 Node* searchAlgorithm(Node* root) {
 
 	Node* node = nullptr;
 
-	bool finalFound = false;
 	Node* finalNode = root;
 
 	nodesToProcess = { root };
@@ -471,7 +548,7 @@ Node* searchAlgorithm(Node* root) {
 
 	//pracuje s "najdenymi nodes"
 	while (!nodesToProcess.empty()) {
-		//z datastructure, ktora sa aktualne pouziva vyberie node, ktory ma nasledovat a s nim pracuje 
+		//z datastructure, ktora sa aktualne pouziva vyberie stav, ktory ma nasledovat a s nim pracuje 
 		node = pop(nodesToProcess);
 
 		if (node->depth >= MAXDEPTH)
@@ -481,223 +558,45 @@ Node* searchAlgorithm(Node* root) {
 			continue;
 		}
 
-		//pre kazde auto
+		//pre kazde auto vykona kazdy mozny pohyb o 1 - 4 policka a novo vygenerovane stavy vlozi do stack / queue
 		for (auto& car : node->cars)
 		{
 			//kazdy pohyb
 			if (car.dir == 'v')
 			{
-				for (unsigned short n = 1; n <= 4; n++)
-				{
-					unsigned short index = up(node, car.color, n);
+				finalNode = move(node, car, &up);
+				if (finalNode) { break; }
 
-					if (index == 0xffff)
-					{
-						break;
-					}
-
-					Node* newNode = new Node;
-					newNode->cars = node->cars;
-
-					newNode = moveUp(newNode, index, n);
-
-					newNode->color = car.color;
-					newNode->dir = 'u';
-					newNode->n = n;
-
-					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
-
-					if (alreadyVisited != visited.end())
-					{
-						//std::cout << "uz existuje" << std::endl;
-
-						delete newNode;
-
-						continue;
-					}
-
-					newNode->pNode = node;
-					newNode->depth = node->depth + 1;
-
-					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl; 
-
-					/*ak sa v novo vygenerovanom stave moze cervene auto dostat z parkoviska, tak vytvori stav v ktorom posunie cervene auto na finalnu poziciu,
-					pre tento stav nastavi pointer na newNode a ukonci sa vyhladavanie grafu
-					pre pohyby aut, ktore su otocene horizontalne to netreba kontrolovat, pretoze ziaden horizontalny pohyb auta neovplyvni trasu pre cervene auto,
-					iba ze by bolo v tom istom riadku ako je cervene auto, co je ale skontrolovane pred zaciatkom search algoritmu*/
-
-					redIndex = checkForFinal(newNode);
-
-					if (redIndex != 0xffff)
-					{
-						finalNode = moveRedToFinal(newNode, redIndex);
-
-						finalNode->pNode = newNode;
-
-						finalFound = true;
-						break;
-					}
-
-					nodesToProcess.push_back(newNode);
-				}
-
-				if (finalFound) { break; }
-
-				for (unsigned short n = 1; n <= 4; n++)
-				{
-					unsigned short index = down(node, car.color, n);
-
-					if (index == 0xffff)
-					{
-						break;
-					}
-
-					Node* newNode = new Node;
-					newNode->cars = node->cars;
-
-					newNode = moveDown(newNode, index, n);
-
-					newNode->color = car.color;
-					newNode->dir = 'd';
-					newNode->n = n;
-
-					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
-
-					if (alreadyVisited != visited.end()) {
-						//std::cout << "uz existuje" << std::endl;
-
-						delete newNode;
-
-						continue;
-					}
-
-					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl;
-
-					newNode->pNode = node;
-					newNode->depth = node->depth + 1;
-
-
-					redIndex = checkForFinal(newNode);
-
-					if (redIndex != 0xffff)
-					{
-						finalNode = moveRedToFinal(newNode, redIndex);
-
-						finalNode->pNode = newNode;
-
-						finalFound = true;
-						break;
-					}
-
-					nodesToProcess.push_back(newNode);
-				}
-
-				if (finalFound) { break; }
+				finalNode = move(node, car, &down);
+				if (finalNode) { break; }
 			}
 			else
 			{
-				//kazdy pohyb od 1 do 4
-				for (unsigned short n = 1; n <= 4; n++)
-				{
-					unsigned short index = left(node, car.color, n);
+				move(node, car, &left);
 
-					if (index == 0xffff)
-					{
-						break;
-					}
-
-					Node* newNode = new Node;
-					newNode->cars = node->cars;
-
-					newNode = moveLeft(newNode, index, n);
-					
-					newNode->color = car.color;
-					newNode->dir = 'l';
-					newNode->n = n;
-
-					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
-
-					if (alreadyVisited != visited.end())
-					{
-						//std::cout << "uz existuje" << std::endl;
-
-						delete newNode;
-
-						continue;
-					}
-					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl;
-
-					newNode->pNode = node;
-					newNode->depth = node->depth + 1;
-
-
-					//ak este nemozno hru ukoncit, tak ho prida do stack/queue a search algoritmus pokracuje dalej
-					nodesToProcess.push_back(newNode);
-				}
-
-				for (unsigned short n = 1; n <= 4; n++)
-				{
-					unsigned short index = right(node, car.color, n);
-
-					if (index == 0xffff)
-					{
-						break;
-					}
-
-					Node* newNode = new Node;
-					newNode->cars = node->cars;
-
-					newNode = moveRight(newNode, index, n);
-					
-					newNode->color = car.color;
-					newNode->dir = 'r';
-					newNode->n = n;
-
-					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
-
-					if (alreadyVisited != visited.end())
-					{
-						//std::cout << "uz existuje" << std::endl;
-
-						delete newNode;
-
-						continue;
-					}
-					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl;
-
-
-					newNode->pNode = node;
-					newNode->depth = node->depth + 1;
-
-
-					nodesToProcess.push_back(newNode);
-				}
-
-				if (finalFound) { break; }
+				move(node, car, &right);
 			} 
 		}
 
+		//ak uz z daneho stavu vygeneroval vsetky mozne nasledujuce stavy, tak dany stav vlozi do visited
 		visited.insert(node);
 
-		if (finalFound)
+		if (finalNode)
 		{
 			//ulozi final node do visited, len kvoli tomu, aby sa pri ukonceni programu mohla vymazat
 			visited.insert(finalNode);
 
-			break;
+			return reversePath(finalNode);
 		}
-
-
 	}
 
 
-	return reverse(finalNode);
+	return root;
 }
 
 
 int main(int argc, char* argv[])
 {
-	
 	//spracovanie argumentov zadanych v CLI....zvolenie scenara, nastavenie DFS / BFS, urcenie maximalneho poctu tahov
 	if (argc == 1)
 	{
