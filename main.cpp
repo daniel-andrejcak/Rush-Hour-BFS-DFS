@@ -13,14 +13,45 @@ ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu na
 #include"Header.h"
 
 
+#define RETURN(x) { \
+    std::cout << "v CLI vyberte scenar (1 - 6), zadajte typ prehladavacieho algoritmu (DFS / BFS) a zadajte maximalny pozadovany pocet krokov (default je 30)" << std::endl; \
+    return (x); \
+}
+
+
+
 //max rozmer hracej plochy - suradnice zacinaju 0,0
 const unsigned short BOUNDARIES = 5;
-unsigned short MAXDEPTH = 0;
+
+//default MAXDEPTH moze byt zmeneny cez 3. argument CLI
+unsigned short MAXDEPTH = 30;
 
 
+//pomocne funckie pre vypis
 std::ostream& operator<<(std::ostream& os, const Node* node) {
 	for (auto& car : node->cars) {
 		os << colorToString(car.color) << " x: " << car.xAxis << " y: " << car.yAxis << " size: " << car.size << " direction: " << car.dir << std::endl;
+	}
+
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const char dir) {
+	if (dir == 'u') 
+	{
+		os << "HORE";
+	}
+	else if(dir == 'd')
+	{
+		os << "DOLE";
+	}
+	else if (dir == 'l')
+	{
+		os << "VLAVO";
+	}
+	else if (dir == 'r')
+	{
+		os << "VPRAVO";
 	}
 
 	return os;
@@ -73,8 +104,6 @@ Car carValidation(const Color& color, const unsigned short xAxis, const unsigned
 
 	return Car(color, xAxis, yAxis, size, move);
 }
-
-
 
 
 //funckia na vyvorenie pociatocneho stavu;
@@ -669,17 +698,40 @@ Node* searchAlgorithm(Node* root) {
 int main(int argc, char* argv[])
 {
 	
-	//spracovanie argumentov zadanych v CLI....nastavenie DFS / BFS a zvolenie scenara
+	//spracovanie argumentov zadanych v CLI....zvolenie scenara, nastavenie DFS / BFS, urcenie maximalneho poctu tahov
 	if (argc == 1)
 	{
-		std::cout << "v CLI vyberte scenar (1 - 6), zadajte typ prehladavacieho algoritmu (DFS / BFS) a zadajte maximalny pozadovany pocet krokov" << std::endl;
-
-		return 1;
+		RETURN(1);
 	}
 
 
-	/*tu bude vybratie scenaru*/
+	//vyber scenara
+	char s = argv[1][0];
+	std::string scenar;
 
+	switch (s)
+	{
+	case '1':
+		scenar = "oranzove 0 0 2 h zlte 0 1 3 v ruzove 0 4 2 v cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
+		break;
+	case '2':
+		break;
+	case '3':
+		break;
+	case '4':
+		break;
+	case '5':
+		break;
+	case '6':
+		break;
+
+	default:
+		RETURN(1);
+	}
+
+
+
+	//vyber vyhladavacieho algoritmu
 	std::string stringArg(argv[2]);
 
 	if (stringArg == "DFS")
@@ -692,24 +744,17 @@ int main(int argc, char* argv[])
 	}
 	else 
 	{
-		std::cout << "zly typ prehladavacieho algoritmu - vyberte DFS, alebo BFS" << std::endl;
-
-		return 1;
+		RETURN(1);
 	}
 
-
-	MAXDEPTH = atoi(argv[3]);
-
-
-
-	//std::string inputString = "cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
-	std::string inputString = "oranzove 0 0 2 h zlte 0 1 3 v ruzove 0 4 2 v cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
+	//urcenie maximalneho poctu tahov
+	if (argc >= 4) { MAXDEPTH = atoi(argv[3]); }
 
 
 
 
 	//inicializacia pociatocneho stavu
-	Node* root = loadCars(inputString);
+	Node* root = loadCars(scenar);
 
 	//spustenie vyhladavacieho algoritmu
 	root = searchAlgorithm(root);
