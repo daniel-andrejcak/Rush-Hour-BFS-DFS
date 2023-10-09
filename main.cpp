@@ -355,8 +355,8 @@ Node* moveRight(Node* node, unsigned short index, unsigned short n) {
 }
 
 
-/*Hlavolam je vyriešený, keï je èervené auto (v smere jeho jazdy) na okraji križovatky a môže sa z nej dosta von.
-Predpokladajte, že èervené auto je vždy otoèené horizontálne a smeruje doprava.*/
+/*Hlavolam je vyrieï¿½enï¿½, keï¿½ je ï¿½ervenï¿½ auto (v smere jeho jazdy) na okraji kriï¿½ovatky a mï¿½ï¿½e sa z nej dostaï¿½ von.
+Predpokladajte, ï¿½e ï¿½ervenï¿½ auto je vï¿½dy otoï¿½enï¿½ horizontï¿½lne a smeruje doprava.*/
  unsigned short checkForFinal(const Node* node) {
 	unsigned short redX = 0;
 	unsigned short redY = 0;
@@ -475,11 +475,9 @@ Node* move(Node* node, const Car& car, unsigned short (*dirValidFunc)(const Node
 		newNode->color = car.color;
 		newNode->n = n;
 
-		std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
 
-		if (alreadyVisited != visited.end())
+		if (visited.find(newNode) != visited.end())
 		{
-
 			delete newNode;
 
 			continue;
@@ -542,7 +540,6 @@ Node* searchAlgorithm(Node* root) {
 		delete root;
 
 		exit(1);
-
 	}
 
 
