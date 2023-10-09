@@ -15,7 +15,7 @@ ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu na
 
 //max rozmer hracej plochy - suradnice zacinaju 0,0
 unsigned short BOUNDARIES = 5;
-unsigned short MAXDEPTH = 7;
+unsigned short MAXDEPTH = 0;
 
 
 std::ostream& operator<<(std::ostream& os, const Node* node) {
@@ -412,9 +412,12 @@ takzvane to zrobi to co chce uloha a vrati to root s cestou k final nodu, alebo 
 */
 Node* searchAlgorithm(Node* root) {
 
-	Node* finalNode = nullptr;
 	Node* node = nullptr;
+
 	bool finalFound = false;
+	Node* finalNode = root;
+
+	nodesToProcess = { root };
 
 	//ak sa da s cervenym autom vyjst z parkoviska v pociatocnom stave;
 	unsigned short redIndex = checkForFinal(root);
@@ -476,13 +479,13 @@ Node* searchAlgorithm(Node* root) {
 
 					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
 
-					//if (alreadyVisited != visited.end()) {
-					//	//std::cout << "uz existuje" << std::endl;
+					if (alreadyVisited != visited.end()) {
+						//std::cout << "uz existuje" << std::endl;
 
-					//	delete newNode;
+						delete newNode;
 
-					//	continue;
-					//}
+						continue;
+					}
 
 					newNode->pNode = node;
 					newNode->depth = node->depth + 1;
@@ -531,13 +534,13 @@ Node* searchAlgorithm(Node* root) {
 
 					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
 
-					//if (alreadyVisited != visited.end()) {
-					//	//std::cout << "uz existuje" << std::endl;
+					if (alreadyVisited != visited.end()) {
+						//std::cout << "uz existuje" << std::endl;
 
-					//	delete newNode;
+						delete newNode;
 
-					//	continue;
-					//}
+						continue;
+					}
 
 					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl;
 
@@ -585,13 +588,13 @@ Node* searchAlgorithm(Node* root) {
 
 					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
 
-					//if (alreadyVisited != visited.end()) {
-					//	//std::cout << "uz existuje" << std::endl;
+					if (alreadyVisited != visited.end()) {
+						//std::cout << "uz existuje" << std::endl;
 
-					//	delete newNode;
+						delete newNode;
 
-					//	continue;
-					//}
+						continue;
+					}
 					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl;
 
 					newNode->pNode = node;
@@ -622,13 +625,13 @@ Node* searchAlgorithm(Node* root) {
 
 					std::unordered_set<Node*>::const_iterator alreadyVisited = visited.find(newNode);
 
-					//if (alreadyVisited != visited.end()) {
-					//	//std::cout << "uz existuje" << std::endl;
+					if (alreadyVisited != visited.end()) {
+						//std::cout << "uz existuje" << std::endl;
 
-					//	delete newNode;
+						delete newNode;
 
-					//	continue;
-					//}
+						continue;
+					}
 					//std::cout << colorToString(newNode->color) << " " << newNode->dir << " " << newNode->n << " " << std::endl;
 
 
@@ -669,12 +672,15 @@ int main(int argc, char* argv[]) {
 	
 	//spracovanie argumentov zadanych v CLI....nastavenie DFS / BFS a zvolenie scenara
 	if (argc == 1) {
-		std::cout << "v CLI zadajte typ prehladavacieho algoritmu (DFS / BFS)" << std::endl;
+		std::cout << "v CLI vyberte scenar (1 - 6), zadajte typ prehladavacieho algoritmu (DFS / BFS) a zadajte maximalny pozadovany pocet krokov" << std::endl;
 
 		return 1;
 	}
 
-	std::string stringArg(argv[1]);
+
+	/*tu bude vybratie scenaru*/
+
+	std::string stringArg(argv[2]);
 
 	if (stringArg == "DFS") {
 		pop = popDfs;
@@ -683,6 +689,17 @@ int main(int argc, char* argv[]) {
 	{
 		pop = popBfs;
 	}
+	else 
+	{
+		std::cout << "zly typ prehladavacieho algoritmu - vyberte DFS, alebo BFS" << std::endl;
+
+		return 1;
+	}
+
+
+	MAXDEPTH = atoi(argv[3]);
+
+
 
 
 	//std::string inputString = "cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
@@ -690,15 +707,20 @@ int main(int argc, char* argv[]) {
 
 
 
+
+	//inicializacia pociatocneho stavu
 	Node* root = loadCars(inputString);
 
-	nodesToProcess.push_back(root);
-
+	//spustenie vyhladavacieho algoritmu
 	root = searchAlgorithm(root);
 
+
+
+
 	//ak sa nenajde riesenie, tak sa len vypise pociatocny stav a sprava
-	if (root == nullptr) {
-		std::cout << "nenaslo sa riesenie" << std::endl;
+	if (root->pNode == nullptr)
+	{
+		std::cout << root << std::endl << "nenaslo sa riesenie na pozadovany pocet tahov" << std::endl;
 
 		return 1;
 	}
@@ -706,10 +728,8 @@ int main(int argc, char* argv[]) {
 	//vypisanie priebehu od pociatocneho stavu po finalny
 	std::cout << root << std::endl;
 
-	int x = 0;
-
-	while (root->pNode != nullptr) {
-		x += 1;
+	while (root->pNode != nullptr) 
+	{
 		root = root->pNode;
 
 		std::cout << colorToString(root->color) << " " << root->dir << " " << root->n << " " << std::endl;
@@ -718,11 +738,9 @@ int main(int argc, char* argv[]) {
 
 	std::cout << std::endl << root << std::endl;
 
-	std::cout << x << std::endl;
 
 
 	//uvolnenie pamate na konci programu
-
 	for (auto& node : visited)
 	{
 		delete node;
