@@ -23,8 +23,7 @@ ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu na
 const unsigned short BOUNDARIES = 5;
 
 //default MAXDEPTH moze byt zmeneny cez 3. argument CLI
-unsigned short MAXDEPTH = 100;
-
+unsigned short MAXDEPTH = USHRT_MAX;
 
 
 //unordered_set pre visited nodes, lebo vyuziva hash table na hladanie prvkov - rychlejsie ako prehladavanie celeho vectora
@@ -32,6 +31,7 @@ std::unordered_set<Node*, CustomNodeHash, CustomNodeEqual> visited;
 
 //tento vektor sa podla zvoleneho search algoritmu bude spravat ako stack, alebo queue
 std::vector<Node*> nodesToProcess;
+
 
 //pomocne funckie pre vypis
 std::ostream& operator<<(std::ostream& os, const Node* node) {
@@ -135,8 +135,6 @@ Node* loadCars(const std::string& inputString) {
 
 	return root;
 }
-
-
 
 
 
@@ -415,6 +413,7 @@ Node *moveRedToFinal(const Node* node, const unsigned short& redIndex) {
 	newNode->color = Color::CERVENE;
 	newNode->dir = 'r';
 	newNode->n = 4 - newNode->cars.at(redIndex).xAxis;
+	newNode->depth = node->depth + 1;
 	
 	newNode->cars.at(redIndex).xAxis = 4;
 
@@ -445,7 +444,7 @@ Node* reversePath(Node* root)
 
 
 /*
-pre dane auto - car, v danom stave - node, sa pokusi vykonat pozadovany pohyb o 1 - 4 policka a novo vygenerovane stavy vlozi do stack alebo queue
+pre dane auto - car, v danom stave - node, sa pokusi vykonat pozadovany pohyb o 1 - 4 policka a novo vygenerovane uzly vlozi do stack alebo queue
 */
 Node* move(Node* node, const Car& car, unsigned short (*dirValidFunc)(const Node*, const Color&, unsigned short), Node* (*dir)(Node*, unsigned short, unsigned short)) {
 	for (unsigned short n = 1; n <= 4; n++)
@@ -507,12 +506,6 @@ Node* move(Node* node, const Car& car, unsigned short (*dirValidFunc)(const Node
 
 Node* searchAlgorithm(Node* root) {
 
-	Node* node = nullptr;
-
-	Node* finalNode = root;
-
-	nodesToProcess = { root };
-
 	//ak sa da s cervenym autom vyjst z parkoviska v pociatocnom stave;
 	unsigned short redIndex = checkForFinal(root);
 
@@ -536,12 +529,20 @@ Node* searchAlgorithm(Node* root) {
 	}
 
 
+	Node* node = nullptr;
+
+	Node* finalNode = root;
+
+	nodesToProcess = { root };
+
+
+
 	//pracuje s "najdenymi nodes"
 	while (!nodesToProcess.empty()) {
 		//z datastructure, ktora sa aktualne pouziva vyberie stav, ktory ma nasledovat a s nim pracuje 
 		node = pop(nodesToProcess);
 
-		if (node->depth >= MAXDEPTH)
+		if (node->depth >= MAXDEPTH - 1)
 		{
 			delete node;
 
@@ -573,6 +574,7 @@ Node* searchAlgorithm(Node* root) {
 
 		if (finalNode)
 		{
+			visited.insert(node);
 			//ulozi final node do visited, len kvoli tomu, aby sa pri ukonceni programu mohla vymazat
 			visited.insert(finalNode);
 
@@ -609,13 +611,20 @@ int main(int argc, char* argv[])
 		scenar = "oranzove 0 0 2 h zlte 0 1 3 v ruzove 0 4 2 v cervene 1 2 2 h zelene 4 2 2 h modre 3 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
 		break;
 	case '3':
-
+		//malo by byt 36 krokov, ale bfs trva dlho
+		scenar = "biele 0 0 2 h ruzove 0 2 2 v modre 0 4 2 h sive 0 5 2 h cervene 1 2 2 h svetlomodre 2 3 3 v zlte 3 0 3 v zelene 3 3 2 h oranzove 4 0 2 v cierne 5 0 2 v hnede 5 2 3 v";
 		break;
 	case '4':
+		//26 krokov BFS
+		scenar = "zlte 0 0 3 v zelene 1 0 2 h biele 3 0 3 v cervene 1 2 2 h oranzove 2 3 2 v svetlomodre 0 5 3 h modre 3 3 3 h cierne 5 4 2 v";
 		break;
 	case '5':
+		//9 krokov BFS
+		scenar = "oranzove 2 1 2 h cervene 2 2 2 h zelene 4 0 2 v zlte 5 0 3 v svetlomodre 4 2 2 v modre 2 3 3 v ruzove 3 4 2 v cierne 4 4 2 h";
 		break;
 	case '6':
+		//neriesitelne
+		scenar = "zlte 0 0 3 h zelene 4 0 2 v oranzove 5 0 2 v svetlomodre 2 1 2 v cervene 0 2 2 h ruzove 0 3 2 h modre 1 4 2 v zelene 2 3 3 v biele 3 4 2 h cierne 3 5 3 h hnede 5 3 2 v";
 		break;
 
 	default:
@@ -660,28 +669,29 @@ int main(int argc, char* argv[])
 	{
 		std::cout << root << std::endl << "nenaslo sa riesenie na pozadovany pocet tahov" << std::endl;
 
-		return 1;
 	}
+	else {
 
-	//vypisanie priebehu od pociatocneho stavu po finalny
-	std::cout << root << std::endl;
+		//vypisanie priebehu od pociatocneho stavu po finalny
+		std::cout << root << std::endl;
 
-	while (root->pNode != nullptr) 
-	{
-		root = root->pNode;
+		while (root->pNode != nullptr) 
+		{
+			root = root->pNode;
 
-		std::cout << colorToString(root->color) << " " << root->dir << " " << root->n << " " << std::endl;
+			std::cout << colorToString(root->color) << " " << root->dir << " " << root->n << " " << std::endl;
+		}
+
+		std::cout << std::endl << root << std::endl << "riesenie sa naslo na " << root->depth << " krokov" << std::endl;
+
 	}
-
-	std::cout << std::endl << root << std::endl;
-
-
 
 	//uvolnenie pamate na konci programu
 	for (auto& node : visited)
 	{
 		delete node;
 	}
+
 
 	for (auto& node : nodesToProcess)
 	{

@@ -1,7 +1,7 @@
 #pragma once
 
 enum class Color : unsigned char {
-	BIELE, ZLTE, ORANZOVE, CERVENE, RUZOVE, SVETLOMODRE, MODRE, ZELENE, SIVE, CIERNE, NULLCOLOR
+	BIELE, ZLTE, ORANZOVE, CERVENE, RUZOVE, SVETLOMODRE, MODRE, ZELENE, HNEDE, SIVE, CIERNE, NULLCOLOR
 };
 
 static const std::map<std::string, Color> colorMap = {
@@ -13,6 +13,7 @@ static const std::map<std::string, Color> colorMap = {
 		{"svetlomodre", Color::SVETLOMODRE},
 		{"modre", Color::MODRE},
 		{"zelene", Color::ZELENE},
+		{"hnede", Color::HNEDE},
 		{"sive", Color::SIVE},
 		{"cierne", Color::CIERNE},
 };
