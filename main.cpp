@@ -10,11 +10,11 @@ ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu na
 #include<unordered_set>
 #include<vector>
 
-#include"Header.h"
+#include"structures.h"
 
 //custom "return", ktory vypise do stdout ako pouzivat CLI args pre tento program
 #define RETURN(x) { \
-    std::cout << "v CLI vyberte scenar (1 - 6), zadajte typ prehladavacieho algoritmu (DFS / BFS) a zadajte maximalny pozadovany pocet krokov (default je 30)" << std::endl; \
+    std::cout << "v CLI vyberte scenar (1 - 6), zadajte typ prehladavacieho algoritmu (DFS / BFS) a zadajte maximalny pozadovany pocet krokov (volitelne)" << std::endl; \
     return (x); \
 }
 
@@ -23,8 +23,15 @@ ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu na
 const unsigned short BOUNDARIES = 5;
 
 //default MAXDEPTH moze byt zmeneny cez 3. argument CLI
-unsigned short MAXDEPTH = 30;
+unsigned short MAXDEPTH = 100;
 
+
+
+//unordered_set pre visited nodes, lebo vyuziva hash table na hladanie prvkov - rychlejsie ako prehladavanie celeho vectora
+std::unordered_set<Node*, CustomNodeHash, CustomNodeEqual> visited;
+
+//tento vektor sa podla zvoleneho search algoritmu bude spravat ako stack, alebo queue
+std::vector<Node*> nodesToProcess;
 
 //pomocne funckie pre vypis
 std::ostream& operator<<(std::ostream& os, const Node* node) {
@@ -131,9 +138,6 @@ Node* loadCars(const std::string& inputString) {
 
 
 
-//unordered_set pre visited nodes, lebo vyuziva hash table na hladanie prvkov - rychlejsie ako prehladavanie celeho vectora
-std::unordered_set<Node*, CustomNodeHash, CustomNodeEqual> visited;
-std::vector<Node*> nodesToProcess; //!!!premenovat!!!
 
 
 //kontrola ci je pohyb platny, vrati index auta, ktore sa ma pohnut o n, ak sa neda pohnut o n, vrati -1
@@ -322,6 +326,8 @@ Node* moveUp(Node* node, unsigned short index, unsigned short n) {
 
 	nNode->cars = node->cars;
 
+	nNode->dir = 'u';
+
 	return nNode;
 }
 
@@ -332,6 +338,8 @@ Node* moveDown(Node* node, unsigned short index, unsigned short n) {
 
 	nNode->cars = node->cars;
 
+	nNode->dir = 'd';
+
 	return nNode;
 }
 
@@ -340,6 +348,8 @@ Node* moveLeft(Node* node, unsigned short index, unsigned short n) {
 	Node* nNode = new Node;
 
 	nNode->cars = node->cars;
+
+	nNode->dir = 'l';
 
 	return nNode;
 }
@@ -350,6 +360,8 @@ Node* moveRight(Node* node, unsigned short index, unsigned short n) {
 	Node* nNode = new Node;
 
 	nNode->cars = node->cars;
+
+	nNode->dir = 'r';
 
 	return nNode;
 }
@@ -383,9 +395,8 @@ Predpokladajte, �e �erven� auto je v�dy oto�en� horizont�lne a sme
 			return -1;
 		}
 		
-		//ak je ine auto v tom istom riadku
+		//ak je ine auto v tom istom riadku, co znamena ze cervene sa nikdy nedostane z parkoviska
 		if (c.dir == 'h' && c.yAxis == redY && c.xAxis > redX) {
-			std::cout << "cervene sa nidky nedostane z parkoviska" << std::endl;
 			return -2;
 		}
 	}
@@ -416,10 +427,10 @@ Node *moveRedToFinal(const Node* node, const unsigned short& redIndex) {
 Node* reversePath(Node* root)
 {
 	Node* current = root;
-	Node* prev = NULL;
-	Node* next = NULL;
+	Node* prev = nullptr;
+	Node* next = nullptr;
 
-	while (current != NULL)
+	while (current != nullptr)
 	{
 		next = current->pNode;
 
@@ -436,7 +447,7 @@ Node* reversePath(Node* root)
 /*
 pre dane auto - car, v danom stave - node, sa pokusi vykonat pozadovany pohyb o 1 - 4 policka a novo vygenerovane stavy vlozi do stack alebo queue
 */
-Node* move(Node* node, const Car& car, unsigned short (*dirValidFunc)(const Node*, const Color&, unsigned short)) {
+Node* move(Node* node, const Car& car, unsigned short (*dirValidFunc)(const Node*, const Color&, unsigned short), Node* (*dir)(Node*, unsigned short, unsigned short)) {
 	for (unsigned short n = 1; n <= 4; n++)
 	{
 		unsigned short index = (*dirValidFunc)(node, car.color, n);
@@ -450,32 +461,13 @@ Node* move(Node* node, const Car& car, unsigned short (*dirValidFunc)(const Node
 		Node* newNode = new Node;
 		newNode->cars = node->cars;
 
+		newNode = (*dir)(newNode, index, n);
 
-		if (dirValidFunc == &up)
-		{
-			newNode = moveUp(newNode, index, n);
-			newNode->dir = 'u';
-		}
-		else if (dirValidFunc == &down)
-		{
-			newNode = moveDown(newNode, index, n);
-			newNode->dir = 'd';
-		}
-		else if (dirValidFunc == &left)
-		{
-			newNode = moveLeft(newNode, index, n);
-			newNode->dir = 'l';
-		}
-		else if (dirValidFunc == &right)
-		{
-			newNode = moveRight(newNode, index, n);
-			newNode->dir = 'r';
-		}
 
 		newNode->color = car.color;
 		newNode->n = n;
 
-
+		//ak sa uz taky stav nachadza v grafe
 		if (visited.find(newNode) != visited.end())
 		{
 			delete newNode;
@@ -524,6 +516,16 @@ Node* searchAlgorithm(Node* root) {
 	//ak sa da s cervenym autom vyjst z parkoviska v pociatocnom stave;
 	unsigned short redIndex = checkForFinal(root);
 
+	//kontrola ci cervene auto neni blokovane horizontalnym autom
+	if (redIndex == 0xfffe)
+	{
+		std::cout << "cervene auto sa nikdy nedostane z parkoviska" << std::endl;
+
+		delete root;
+
+		exit(1);
+	}
+
 	if (redIndex != 0xffff) {
 		root->pNode = moveRedToFinal(root, redIndex);
 
@@ -531,15 +533,6 @@ Node* searchAlgorithm(Node* root) {
 		visited.insert(root->pNode);
 
 		return root;
-	}
-	//kontrola ci cervene auto neni blokovane horizontalnym autom
-	else if(redIndex == 0xfffe)
-	{
-		std::cout << "cervene auto sa nikdy nedostane z parkoviska" << std::endl;
-
-		delete root;
-
-		exit(1);
 	}
 
 
@@ -561,17 +554,17 @@ Node* searchAlgorithm(Node* root) {
 			//kazdy pohyb
 			if (car.dir == 'v')
 			{
-				finalNode = move(node, car, &up);
+				finalNode = move(node, car, &up, &moveUp);
 				if (finalNode) { break; }
 
-				finalNode = move(node, car, &down);
+				finalNode = move(node, car, &down, &moveDown);
 				if (finalNode) { break; }
 			}
 			else
 			{
-				move(node, car, &left);
+				move(node, car, &left, &moveLeft);
 
-				move(node, car, &right);
+				move(node, car, &right, &moveRight);
 			} 
 		}
 
@@ -608,11 +601,15 @@ int main(int argc, char* argv[])
 	switch (s)
 	{
 	case '1':
+		//scenar rovnaky ako v zadani
 		scenar = "oranzove 0 0 2 h zlte 0 1 3 v ruzove 0 4 2 v cervene 1 2 2 h zelene 3 1 3 v modre 5 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
 		break;
 	case '2':
+		//scenar, ze cervene auto je blokovane horizontalnym autom
+		scenar = "oranzove 0 0 2 h zlte 0 1 3 v ruzove 0 4 2 v cervene 1 2 2 h zelene 4 2 2 h modre 3 0 3 v sive 4 4 2 h svetlomodre 2 5 3 h";
 		break;
 	case '3':
+
 		break;
 	case '4':
 		break;
@@ -674,7 +671,6 @@ int main(int argc, char* argv[])
 		root = root->pNode;
 
 		std::cout << colorToString(root->color) << " " << root->dir << " " << root->n << " " << std::endl;
-
 	}
 
 	std::cout << std::endl << root << std::endl;

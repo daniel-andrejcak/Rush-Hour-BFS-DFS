@@ -39,7 +39,6 @@ std::string colorToString(const Color& color){
 
 
 
-
 class Car {
 public:
 
@@ -90,11 +89,6 @@ public:
 	Node() {};
 
 	~Node() {};
-
-
-	/*bool operator==(const Node*& other) const {
-		return cars == other->cars;
-	}	*/
 };
 
 
