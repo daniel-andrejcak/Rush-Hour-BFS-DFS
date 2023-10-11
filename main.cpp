@@ -23,7 +23,7 @@ ak sa namiesto queue pouzije stack, teda ze vsetky mozne situacie, ktore mozu na
 const unsigned short BOUNDARIES = 5;
 
 //default MAXDEPTH moze byt zmeneny cez 3. argument CLI
-unsigned short MAXDEPTH = USHRT_MAX;
+unsigned short MAXDEPTH = 0xFFFF;
 
 
 //unordered_set pre visited nodes, lebo vyuziva hash table na hladanie prvkov - rychlejsie ako prehladavanie celeho vectora
@@ -624,7 +624,7 @@ int main(int argc, char* argv[])
 		break;
 	case '6':
 		//neriesitelne
-		scenar = "zlte 0 0 3 h zelene 4 0 2 v oranzove 5 0 2 v svetlomodre 2 1 2 v cervene 0 2 2 h ruzove 0 3 2 h modre 1 4 2 v zelene 2 3 3 v biele 3 4 2 h cierne 3 5 3 h hnede 5 3 2 v";
+		scenar = "zlte 0 0 3 h zelene 4 0 2 v oranzove 5 0 2 v svetlomodre 2 1 2 v cervene 0 2 2 h ruzove 0 3 2 h modre 1 4 2 v sive 2 3 3 v biele 3 4 2 h cierne 3 5 3 h hnede 5 3 2 v";
 		break;
 
 	default:
